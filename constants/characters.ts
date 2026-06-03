@@ -1,0 +1,286 @@
+import { Character } from '@/types'
+
+const avatar = (handle: string) => `https://i.pravatar.cc/150?u=${handle}`
+
+export const CHARACTERS: Character[] = [
+  // Harry Potter
+  {
+    id: 'draco_malfoy', name: 'Draco Malfoy', handle: 'DracoMalfoy',
+    avatar: avatar('DracoMalfoy'), fandom: 'harry_potter',
+    bio: 'Slytherin prefect. Seeker. Pure-blood wizard. Malfoy heir.',
+    description: 'Arrogant, cunning, proud of his pure-blood heritage. Struggles between family loyalty and his own moral compass.',
+    followerCount: 125000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'theodore_nott', name: 'Theodore Nott', handle: 'theodorenott',
+    avatar: avatar('theodorenott'), fandom: 'harry_potter',
+    bio: 'Slytherin. Pureblood. Not your typical Death Eater\'s son.',
+    description: 'Quiet, cerebral, deeply private. Observes more than he speaks. More nuanced than Draco.',
+    followerCount: 89000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'harry_potter', name: 'Harry Potter', handle: 'TheBoyWhoLived',
+    avatar: avatar('TheBoyWhoLived'), fandom: 'harry_potter',
+    bio: 'Gryffindor. The Chosen One. Just trying to survive.',
+    description: 'Brave, loyal, impulsive. Bears the weight of prophecy. Famous for surviving what should have killed him.',
+    followerCount: 2400000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'hermione_granger', name: 'Hermione Granger', handle: 'HermioneGranger',
+    avatar: avatar('HermioneGranger'), fandom: 'harry_potter',
+    bio: 'Gryffindor. Brightest witch of her age. Books over everything.',
+    description: 'Brilliant, principled, occasionally insufferable. Uses knowledge as both weapon and shield.',
+    followerCount: 1800000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'luna_lovegood', name: 'Luna Lovegood', handle: 'LoonyLovegood',
+    avatar: avatar('LoonyLovegood'), fandom: 'harry_potter',
+    bio: 'Ravenclaw. Sees things others miss. Believer in the impossible.',
+    description: 'Dreamy, fearless, deeply intuitive. Posts the most unhinged and oddly profound content.',
+    followerCount: 560000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'ron_weasley', name: 'Ron Weasley', handle: 'RonWeasley',
+    avatar: avatar('RonWeasley'), fandom: 'harry_potter',
+    bio: 'Gryffindor. Harry\'s best mate. Chess champion.',
+    description: 'Loyal, funny, occasionally jealous. Always in Harry\'s shadow but has his own moments.',
+    followerCount: 890000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'dumbledore', name: 'Albus Dumbledore', handle: 'Dumbledore',
+    avatar: avatar('Dumbledore'), fandom: 'harry_potter',
+    bio: 'Headmaster. Order of Merlin. Keeps secrets for the greater good.',
+    description: 'Wise, cryptic, morally complex. Posts feel like prophecies. Always knows more than he lets on.',
+    followerCount: 4200000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'snape', name: 'Severus Snape', handle: 'HalfBloodPrince',
+    avatar: avatar('HalfBloodPrince'), fandom: 'harry_potter',
+    bio: 'Potions Master. Head of Slytherin. Always.',
+    description: 'Cold, precise, deeply wounded. Every post has a double meaning. Loyalty unclear until it\'s too late.',
+    followerCount: 1100000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  // JJK
+  {
+    id: 'sukuna', name: 'Ryomen Sukuna', handle: 'SukunaKing',
+    avatar: avatar('SukunaKing'), fandom: 'jjk',
+    bio: 'The undisputed King of Curses. Embodiment of evil and malice.',
+    description: 'Arrogant beyond measure. Posts with contempt for everyone. Occasionally amused by worthy opponents.',
+    followerCount: 3200000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'megumi', name: 'Megumi Fushiguro', handle: 'MegumiFushiguro',
+    avatar: avatar('MegumiFushiguro'), fandom: 'jjk',
+    bio: 'Jujutsu sorcerer. Ten Shadows Technique. Saving worthy people only.',
+    description: 'Stoic, pragmatic, quietly intense. Rare posts but always hit hard.',
+    followerCount: 780000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'yuji', name: 'Yuji Itadori', handle: 'YujiItadori',
+    avatar: avatar('YujiItadori'), fandom: 'jjk',
+    bio: 'Sukuna\'s vessel. Just wants everyone to have a proper death.',
+    description: 'Warm, earnest, physically impossible strong. Posts like a kind jock who happens to eat cursed fingers.',
+    followerCount: 1400000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'nobara', name: 'Nobara Kugisaki', handle: 'NobaraKugisaki',
+    avatar: avatar('NobaraKugisaki'), fandom: 'jjk',
+    bio: 'Straw Doll Technique. From the countryside. Absolutely done with everyone.',
+    description: 'Bold, self-assured, fashion-forward despite fighting curses. No filter, massive opinions.',
+    followerCount: 920000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'gojo', name: 'Gojo Satoru', handle: 'GojoSatoru',
+    avatar: avatar('GojoSatoru'), fandom: 'jjk',
+    bio: 'Strongest. Infinity. Don\'t @ me.',
+    description: 'Flamboyant genius, effortlessly dominant. Posts that mix profound power with chaotic energy.',
+    followerCount: 8900000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  // MHA
+  {
+    id: 'uraraka', name: 'Ochaco Uraraka', handle: 'uravity',
+    avatar: avatar('uravity'), fandom: 'mha',
+    bio: 'Aspiring hero with zero-gravity quirk. UA Class 1-A.',
+    description: 'Bright, determined, secretly a great strategist. Hype posts mixed with heartfelt moments.',
+    followerCount: 650000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'midoriya', name: 'Izuku Midoriya', handle: 'DekuOfficial',
+    avatar: avatar('DekuOfficial'), fandom: 'mha',
+    bio: 'Pro hero: Deku. One For All. Symbol of peace in training.',
+    description: 'Earnest, notebook-obsessed, cries often. Posts analysis threads and hero inspirations.',
+    followerCount: 2100000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'bakugo', name: 'Katsuki Bakugo', handle: 'KingExplosionMurder',
+    avatar: avatar('KingExplosionMurder'), fandom: 'mha',
+    bio: 'Pro hero: Dynamight. Best in class. Deal with it.',
+    description: 'Rage-posts constantly. Wins despite or because of his attitude. Secretly cares deeply.',
+    followerCount: 3400000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'todoroki', name: 'Shoto Todoroki', handle: 'ShotoDual',
+    avatar: avatar('ShotoDual'), fandom: 'mha',
+    bio: 'Half cold, half hot. Endeavor\'s son. Figuring it out.',
+    description: 'Deadpan, occasionally oblivious, deeply earnest. Posts soba a lot.',
+    followerCount: 2800000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'allmight', name: 'All Might', handle: 'AllMightOfficial',
+    avatar: avatar('AllMightOfficial'), fandom: 'mha',
+    bio: 'Symbol of Peace. Plus Ultra!',
+    description: 'Legendary, endlessly inspiring. Massive platform, only positive energy.',
+    followerCount: 15000000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  // Stranger Things
+  {
+    id: 'eleven', name: 'Eleven', handle: 'ElevenEggo',
+    avatar: avatar('ElevenEggo'), fandom: 'stranger_things',
+    bio: 'Friends don\'t lie. Eggo enthusiast.',
+    description: 'Quiet but powerful. Short posts, big meaning. Posts feel heavy with unsaid things.',
+    followerCount: 4500000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'mike_wheeler', name: 'Mike Wheeler', handle: 'MikeWheeler',
+    avatar: avatar('MikeWheeler'), fandom: 'stranger_things',
+    bio: 'Dungeon Master. Hawkins, Indiana.',
+    description: 'Loyal, dramatic, deeply invested in everyone around him. Anxious poster.',
+    followerCount: 340000, isVerified: false, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'dustin_henderson', name: 'Dustin Henderson', handle: 'DustinHenderson',
+    avatar: avatar('DustinHenderson'), fandom: 'stranger_things',
+    bio: 'Certified genius. Best hair in Hawkins.',
+    description: 'Science nerd, lovable, always has a theory. Explains the Upside Down in tweet threads.',
+    followerCount: 520000, isVerified: false, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'steve_harrington', name: 'Steve Harrington', handle: 'SteveHairrington',
+    avatar: avatar('SteveHairrington'), fandom: 'stranger_things',
+    bio: 'Former King of Hawkins High. Current babysitter supreme.',
+    description: 'Reformed popular kid, now surprisingly wholesome. Posts about the kids and Farrah Fawcett spray.',
+    followerCount: 780000, isVerified: false, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'max_mayfield', name: 'Max Mayfield', handle: 'MaxMayfield',
+    avatar: avatar('MaxMayfield'), fandom: 'stranger_things',
+    bio: 'Hawkins High. Arcade champion. Don\'t underestimate me.',
+    description: 'Sarcastic, resilient, deeply guarded. Posts sparingly, always cuts to the bone.',
+    followerCount: 610000, isVerified: false, isPlayerControlled: false, controlledByUserId: null,
+  },
+  // Euphoria
+  {
+    id: 'rue_bennett', name: 'Rue Bennett', handle: 'RueBennett',
+    avatar: avatar('RueBennett'), fandom: 'euphoria',
+    bio: 'East Highland. Narrator. Recovering. Sort of.',
+    description: 'Raw, poetic, self-aware of her own destruction. Posts feel like journal entries.',
+    followerCount: 2200000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'jules_vaughn', name: 'Jules Vaughn', handle: 'JulesVaughn',
+    avatar: avatar('JulesVaughn'), fandom: 'euphoria',
+    bio: 'New to East Highland. Finding herself.',
+    description: 'Dreamy, romantic, running from something. Posts art, feelings, complicated moments.',
+    followerCount: 1800000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'maddy_perez', name: 'Maddy Perez', handle: 'MaddyPerez',
+    avatar: avatar('MaddyPerez'), fandom: 'euphoria',
+    bio: 'East Highland royalty. Not to be played with.',
+    description: 'Fierce, fashionable, dangerous when cornered. Posts aesthetic content and veiled threats.',
+    followerCount: 3100000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'cassie_howard', name: 'Cassie Howard', handle: 'CassieHoward',
+    avatar: avatar('CassieHoward'), fandom: 'euphoria',
+    bio: 'East Highland. Just trying.',
+    description: 'Desperate for validation, beautiful, makes catastrophically bad decisions. Overshares.',
+    followerCount: 1400000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'nate_jacobs', name: 'Nate Jacobs', handle: 'NateJacobs',
+    avatar: avatar('NateJacobs'), fandom: 'euphoria',
+    bio: 'East Highland QB. Knows what he wants.',
+    description: 'Controlling, manipulative, masks everything with charm. Posts calculated perfection.',
+    followerCount: 2600000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  // Celebrities
+  {
+    id: 'drake_celeb', name: 'Drake', handle: 'Drake',
+    avatar: avatar('DrakeOfficial'), fandom: 'celebrities',
+    bio: 'Started from the bottom. OVO. Toronto forever.',
+    description: 'Dominant, sensitive, occasionally petty. Posts feel like song lyrics. Every move calculated.',
+    followerCount: 45000000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'billie_eilish', name: 'Billie Eilish', handle: 'BillieEilish',
+    avatar: avatar('BillieEilish'), fandom: 'celebrities',
+    bio: 'bad guy. duh.',
+    description: 'Authentic, anti-industry, massive influence. Posts that feel personal even at 100M followers.',
+    followerCount: 102000000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  // K-pop (fictional idols)
+  {
+    id: 'kpop_juno', name: 'Juno Lee', handle: 'JUNO_official',
+    avatar: avatar('JUNO_official'), fandom: 'kpop',
+    bio: 'NOVA group. Main vocalist. Your bias.',
+    description: 'Golden voice, fan-favorite, always emotional at fan meets. Posts practice clips and midnight thoughts.',
+    followerCount: 8900000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'kpop_aria', name: 'Aria Kim', handle: 'AriaKim_NOVA',
+    avatar: avatar('AriaKim_NOVA'), fandom: 'kpop',
+    bio: 'NOVA group. Main dancer. Ice queen.',
+    description: 'Cold public image, secretly warm. Posts dance videos and rare selfies. Fans theorize about everything.',
+    followerCount: 7200000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'kpop_ray', name: 'Ray Park', handle: 'RayPark_NOVA',
+    avatar: avatar('RayPark_NOVA'), fandom: 'kpop',
+    bio: 'NOVA group. Rapper. From the streets of Seoul.',
+    description: 'Hard exterior, goofy off-stage. Posts freestyle clips and confusing English.',
+    followerCount: 6100000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'kpop_sol', name: 'Sol Yoon', handle: 'SolYoon_LUNA',
+    avatar: avatar('SolYoon_LUNA'), fandom: 'kpop',
+    bio: 'LUNA group. Center. Living the dream.',
+    description: 'Bubbly, optimistic, secretly stressed. Posts fan appreciation and behind-the-scenes.',
+    followerCount: 9400000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'kpop_mira', name: 'Mira Choi', handle: 'MiraChoi_LUNA',
+    avatar: avatar('MiraChoi_LUNA'), fandom: 'kpop',
+    bio: 'LUNA group. Maknae. Don\'t let the age fool you.',
+    description: 'Youngest but most composed. Posts aesthetic content and subtle shade.',
+    followerCount: 5800000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'kpop_producer', name: 'Min-Jun Oh', handle: 'MJProduces',
+    avatar: avatar('MJProduces'), fandom: 'kpop',
+    bio: 'Behind the sound. K-pop producer.',
+    description: 'Knows everyone\'s secrets. Posts cryptic studio content. Involved in every scandal indirectly.',
+    followerCount: 2300000, isVerified: true, isPlayerControlled: false, controlledByUserId: null,
+  },
+  // Off Campus (fictional)
+  {
+    id: 'briar_captain', name: 'Jake Connelly', handle: 'JakeConnelly',
+    avatar: avatar('JakeConnelly'), fandom: 'off_campus',
+    bio: 'Briar University hockey captain. Working for the W.',
+    description: 'Intense, focused, complicated feelings about everything. Posts hockey and veiled emotion.',
+    followerCount: 340000, isVerified: false, isPlayerControlled: false, controlledByUserId: null,
+  },
+  {
+    id: 'briar_star', name: 'Brenna James', handle: 'BrennaJames',
+    avatar: avatar('BrennaJames'), fandom: 'off_campus',
+    bio: 'Briar University. Pre-law. Too smart for this.',
+    description: 'Sharp, witty, surrounded by drama she didn\'t ask for. Posts observations and chaos.',
+    followerCount: 180000, isVerified: false, isPlayerControlled: false, controlledByUserId: null,
+  },
+]
+
+export const getCharacterById = (id: string): Character | undefined =>
+  CHARACTERS.find(c => c.id === id)
+
+export const getCharactersByFandom = (fandom: string): Character[] =>
+  CHARACTERS.filter(c => c.fandom === fandom)
