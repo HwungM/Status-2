@@ -113,10 +113,10 @@ STORY ARC:
 - Pending consequences: ${consequencesStr || 'None'}
 - Cast dynamics: ${castDynamicsStr || 'None established yet'}
 
-CHARACTERS:
-${allCharacters.map(c => `${c.name} (@${c.handle}): ${c.bio}`).join('\n')}
+CHARACTERS (use the exact id field in all JSON responses):
+${allCharacters.map(c => `id="${c.id}" name="${c.name}" handle="@${c.handle}" followers=${c.followerCount} — ${c.bio}`).join('\n')}
 
-PLAYER: ${playerCharacter.name} (@${playerCharacter.handle})
+PLAYER: id="${playerCharacter.id}" name="${playerCharacter.name}" handle="@${playerCharacter.handle}"
 - Followers: ${playerState.followerCount}
 - Level: ${playerState.level}
 - Stats: ${Object.entries(playerState.stats).map(([k, v]) => `${k}: ${v}%`).join(', ')}
@@ -125,28 +125,28 @@ PLAYER: ${playerCharacter.name} (@${playerCharacter.handle})
 RECENT FEED (last 20):
 ${feedContext || 'Feed is empty — this is the beginning.'}
 
-CHEMISTRY TYPES (these MUST shape how characters interact):
-- rivals: public competition, callouts, subtweeting, shade, trying to one-up each other
-- spicy: flirtatious tension, thirst replies, ambiguous will-they-won't-they energy
-- lovers: soft, protective, private jokes, defending each other publicly
-- friends: supportive hype, tag-ins, banter, inside jokes
-- enemies: active hostility, blocking threats, exposing drama, direct conflict
-- strangers: distant/cold, no acknowledgment yet
+CHEMISTRY TYPES (shape how characters interact):
+- rivals: shade, subtweeting, vague posting, indirect competition — NEVER say "rival" out loud
+- spicy: flirtatious tension, thirst replies, ambiguous energy — let it simmer, don't announce it
+- lovers: soft, inside jokes, defending, private-feeling public moments
+- friends: hype, banter, @-ing each other, tag-ins, inside jokes
+- enemies: cold shoulders, receipts, callouts, public beef
+- strangers: no acknowledgment yet
 
 MADNESS SCALE BEHAVIOR:
-- 0-20 (Realistic): Grounded drama. Real-feeling social dynamics. Consequences feel earned.
-- 21-50 (Heightened): Exaggerated but believable. Drama escalates faster. Wilder coincidences.
-- 51-80 (Chaotic): Absurd twists. Characters do unhinged things. Plot armor activated.
-- 81-100 (Bonkers): Complete chaos. Anything goes. Reality-bending events. Maximum clout mayhem.
+- 0-20 (Realistic): Grounded. Real social dynamics. Nothing over-the-top.
+- 21-50 (Heightened): Drama moves faster. Coincidences pile up.
+- 51-80 (Chaotic): Wild twists. Characters do unexpected things.
+- 81-100 (Bonkers): Anything goes. Maximum chaos.
 
-Rules:
-- Stay in character always. Write like real social media — short, punchy, platform-native.
-- Match each character's voice to their bio exactly.
-- ALWAYS reflect the chemistry type in how NPCs post about/to the player.
-- The madness scale (${worldState.madnessScale}/100) actively shapes event tone and NPC behavior.
-- Negative consequences (scandals, cancellation, follower loss) should happen organically.
-- Build toward narrative moments — you are telling a story, not just responding to inputs.
-- ALL responses must be valid JSON.`
+WRITING RULES — CRITICAL:
+- Write like a REAL person on social media. Short. Casual. Emoji where it fits.
+- NEVER write lines like "I see I have a new rival" or "watch your back" or villain-speak.
+- Show don't tell: if someone is jealous, they post something subtly shady, not a speech.
+- Characters have their OWN lives — most posts are NOT about the player. Only mention the player when it naturally makes sense.
+- Vary post types: opinions, jokes, selfie captions, hot takes, personal news, reactions to trends.
+- The player's handle is @${playerCharacter.handle} — only use it when a character would actually tag them.
+- ALL responses must be valid JSON. characterId must be the exact id string from the CHARACTERS list above.`
 }
 
 export async function initializeStoryArc(
@@ -154,7 +154,7 @@ export async function initializeStoryArc(
   playerCharacter: Character,
 ): Promise<StoryArc> {
   const characterList = worldState.characters
-    .map(c => `${c.name} (@${c.handle}): ${c.bio}`)
+    .map(c => `id="${c.id}" ${c.name} (@${c.handle}): ${c.bio}`)
     .join('\n')
 
   const prompt = `You are the narrative engine for "Clout," a social media simulation RPG.
