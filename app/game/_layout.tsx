@@ -1,6 +1,8 @@
 import { Tabs } from 'expo-router'
-import { Text, View, TouchableOpacity, StyleSheet } from 'react-native'
+import { Text, View, StyleSheet } from 'react-native'
+import { useEffect } from 'react'
 import { COLORS } from '@/constants/colors'
+import { useGameStore } from '@/store/gameStore'
 
 function TabIcon({ label, emoji, focused }: { label: string; emoji: string; focused: boolean }) {
   return (
@@ -12,6 +14,12 @@ function TabIcon({ label, emoji, focused }: { label: string; emoji: string; focu
 }
 
 export default function GameLayout() {
+  const { session, loadActiveSession } = useGameStore()
+
+  useEffect(() => {
+    if (!session) loadActiveSession()
+  }, [])
+
   return (
     <Tabs
       screenOptions={{
@@ -53,6 +61,7 @@ export default function GameLayout() {
         }}
       />
       <Tabs.Screen name="messages/[characterId]" options={{ href: null }} />
+      <Tabs.Screen name="character/[id]" options={{ href: null }} />
     </Tabs>
   )
 }
