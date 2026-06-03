@@ -12,6 +12,29 @@ export async function saveApiKey(key: string): Promise<void> {
   await AsyncStorage.setItem(API_KEY_STORAGE, key)
 }
 
+export async function testApiKey(key: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${key}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: 'Reply with the single word: ok' }],
+        max_tokens: 5,
+      }),
+    })
+    if (response.ok) return { ok: true }
+    const data = await response.json().catch(() => ({}))
+    const msg = data?.error?.message || `HTTP ${response.status}`
+    return { ok: false, error: msg }
+  } catch (e: any) {
+    return { ok: false, error: e?.message || 'Network error' }
+  }
+}
+
 async function callOpenAI(messages: { role: string; content: string }[], signal?: AbortSignal): Promise<string> {
   const apiKey = await getApiKey()
   if (!apiKey) throw new Error('No Groq API key configured. Go to Settings to add your key.')
