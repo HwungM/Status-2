@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { StoryArc, Character, PlayerGameState, WorldState, GameEvent, Post } from '@/types'
 import { generateId } from '@/utils/generateId'
 
-const API_KEY_STORAGE = 'clout:openai_key'
+const API_KEY_STORAGE = 'clout:groq_key'
 
 async function getApiKey(): Promise<string | null> {
   return AsyncStorage.getItem(API_KEY_STORAGE)
@@ -14,16 +14,16 @@ export async function saveApiKey(key: string): Promise<void> {
 
 async function callOpenAI(messages: { role: string; content: string }[], signal?: AbortSignal): Promise<string> {
   const apiKey = await getApiKey()
-  if (!apiKey) throw new Error('No OpenAI API key configured. Go to Settings to add your key.')
+  if (!apiKey) throw new Error('No Groq API key configured. Go to Settings to add your key.')
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'gpt-4o',
+      model: 'llama-3.3-70b-versatile',
       messages,
       response_format: { type: 'json_object' },
       temperature: 0.9,
