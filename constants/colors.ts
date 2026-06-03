@@ -1,0 +1,17 @@
+export const COLORS = {
+  background: '#0A0A0A',
+  surface: '#1A1A1A',
+  surface2: '#222222',
+  primary: '#3B82F6',
+  xp: '#F59E0B',
+  positive: '#22C55E',
+  skills: '#F97316',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#9CA3AF',
+  verified: '#3B82F6',
+  divider: '#2A2A2A',
+  loadingGradientStart: '#0F172A',
+  loadingGradientEnd: '#0A0A0A',
+  danger: '#EF4444',
+  purple: '#A855F7',
+} as const
