@@ -112,6 +112,13 @@ export default function ProfileScreen() {
                     <View style={[styles.relBarFill, { width: `${rel.value}%` }]} />
                   </View>
                   <Text style={styles.relFlavor}>{rel.flavorText}</Text>
+                  <TouchableOpacity
+                    style={styles.activityChip}
+                    onPress={() => router.push('/game/feed' as any)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Text style={styles.activityChipText}>🎭 Do Activity</Text>
+                  </TouchableOpacity>
                 </View>
                 <View style={styles.relRight}>
                   <Text style={styles.relPercent}>{rel.value}%</Text>
@@ -177,4 +184,6 @@ const styles = StyleSheet.create({
   relPercent: { color: '#22C55E', fontSize: 14, fontWeight: '700' },
   relChemistry: { color: '#9CA3AF', fontSize: 11 },
   noPosts: { color: '#9CA3AF', fontSize: 14, textAlign: 'center', padding: 20 },
+  activityChip: { marginTop: 6, alignSelf: 'flex-start', backgroundColor: 'rgba(59,130,246,0.12)', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: 'rgba(59,130,246,0.3)' },
+  activityChipText: { color: '#60A5FA', fontSize: 11, fontWeight: '600' },
 })
