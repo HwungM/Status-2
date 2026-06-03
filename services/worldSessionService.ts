@@ -5,7 +5,7 @@ import {
 } from '@/types'
 import { generateInviteCode } from '@/utils/inviteCode'
 import { xpToNextLevel } from '@/utils/xpCalc'
-import { v4 as uuidv4 } from 'uuid'
+import { generateId } from '@/utils/generateId'
 
 const SESSIONS_KEY = 'clout:sessions'
 const ACTIVE_SESSION_KEY = 'clout:activeSessionId'
@@ -88,7 +88,7 @@ function createDefaultStoryArc(): StoryArc {
 export const LocalWorldSessionService: IWorldSessionService = {
   async createSession(params) {
     const sessions = await loadAll()
-    const sessionId = uuidv4()
+    const sessionId = generateId()
     const userId = 'player_1'
 
     const playerCharacter = params.characters.find(c => c.id === params.playerCharacterId)!
@@ -132,7 +132,7 @@ export const LocalWorldSessionService: IWorldSessionService = {
         characters: params.characters,
         milestones: [
           {
-            id: uuidv4(),
+            id: generateId(),
             title: 'First Impression',
             requirements: [
               { name: 'Make 3 posts', isCompleted: false, pointsNeeded: 3 },
@@ -143,9 +143,9 @@ export const LocalWorldSessionService: IWorldSessionService = {
           },
         ],
         sideQuests: [
-          { id: uuidv4(), description: 'Post something controversial and survive', xpReward: 25, isCompleted: false, isBookmarked: false },
-          { id: uuidv4(), description: 'Get a reply from your favorite character', xpReward: 20, isCompleted: false, isBookmarked: false },
-          { id: uuidv4(), description: 'Reach 5,000 followers', xpReward: 30, isCompleted: false, isBookmarked: false },
+          { id: generateId(), description: 'Post something controversial and survive', xpReward: 25, isCompleted: false, isBookmarked: false },
+          { id: generateId(), description: 'Get a reply from your favorite character', xpReward: 20, isCompleted: false, isBookmarked: false },
+          { id: generateId(), description: 'Reach 5,000 followers', xpReward: 30, isCompleted: false, isBookmarked: false },
         ],
       },
       storyArc,

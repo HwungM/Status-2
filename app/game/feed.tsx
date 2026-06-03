@@ -14,7 +14,7 @@ import { ResultsToast } from '@/components/feed/ResultsToast'
 import { EventBanner } from '@/components/feed/EventBanner'
 import { Post, GameEvent } from '@/types'
 import { LocalWorldSessionService } from '@/services/worldSessionService'
-import { v4 as uuidv4 } from 'uuid'
+import { generateId } from '@/utils/generateId'
 import { formatFollowerCount } from '@/utils/statHelpers'
 
 export default function FeedScreen() {
@@ -79,7 +79,7 @@ export default function FeedScreen() {
     setPostComposerVisible(false)
 
     const post: Post = {
-      id: uuidv4(),
+      id: generateId(),
       sessionId: session.id,
       authorCharacterId: playerChar.id,
       authorUserId: playerSlot.userId,
