@@ -5,6 +5,7 @@ import {
   generateEvent, resolvePlayerAction, generateFeedPosts,
   generateDMResponse, initializeStoryArc, generateWorldInspiration,
   generateSideQuests, ActionResult,
+  generateActivity, ActivityResult, generateDayAdvance, DayAdvanceResult,
 } from '@/services/openaiService'
 import { LocalWorldSessionService } from '@/services/worldSessionService'
 import { generateId } from '@/utils/generateId'
@@ -112,9 +113,6 @@ export function useAI() {
 
       // Day progression
       const totalActions = (ctx.playerSlot.gameState.totalActionsThisSession || 0) + 1
-      if (totalActions % 10 === 0) {
-        await dispatch({ type: 'DAY_ADVANCED', payload: { newDay: ctx.worldState.dayNumber + 1 } })
-      }
       await LocalWorldSessionService.updatePlayerState(session.id, ctx.playerSlot.userId, {
         totalActionsThisSession: totalActions,
       })
@@ -212,5 +210,145 @@ export function useAI() {
     }
   }, [session])
 
-  return { isGenerating, generateNewEvent, handlePlayerAction, loadInitialFeed, sendDM, getWorldInspiration, initWorld }
+  const doActivity = useCallback(async (
+    activityType: string,
+    activityDesc: string,
+    involvedCharacterIds: string[],
+  ): Promise<ActivityResult | null> => {
+    const ctx = getContext()
+    if (!ctx || !session) return null
+    setIsGenerating(true)
+    try {
+      const involvedChars = ctx.worldState.characters.filter(c => involvedCharacterIds.includes(c.id))
+      const result = await generateActivity(
+        activityType, activityDesc, involvedChars,
+        ctx.worldState, ctx.storyArc, ctx.playerSlot.gameState,
+        ctx.playerCharacter, ctx.worldState.characters,
+      )
+
+      if (result.xpGained > 0) {
+        await dispatch({ type: 'XP_GAINED', payload: { userId: ctx.playerSlot.userId, amount: result.xpGained } })
+      }
+      if (result.followersGained !== 0) {
+        await dispatch({ type: 'FOLLOWERS_GAINED', payload: { userId: ctx.playerSlot.userId, amount: result.followersGained, reason: result.narrativeResult } })
+      }
+      for (const sc of result.statChanges) {
+        await dispatch({ type: 'STAT_CHANGED', payload: { userId: ctx.playerSlot.userId, stat: sc.stat, delta: sc.delta, flavorText: sc.flavorText } })
+      }
+      for (const rc of result.relationshipChanges) {
+        await dispatch({ type: 'RELATIONSHIP_CHANGED', payload: { userId: ctx.playerSlot.userId, characterId: rc.characterId, delta: rc.delta, flavorText: rc.flavorText } })
+      }
+      if (result.tensionDelta !== 0) {
+        await dispatch({ type: 'TENSION_CHANGED', payload: { delta: result.tensionDelta, newTension: Math.min(100, Math.max(0, ctx.storyArc.currentTension + result.tensionDelta)) } })
+      }
+
+      // Create activity post from player
+      const activityPost: Post = {
+        id: generateId(),
+        sessionId: session.id,
+        authorCharacterId: ctx.playerCharacter.id,
+        authorUserId: ctx.playerSlot.userId,
+        content: `[Activity: ${activityType}] ${result.narrativeResult}`,
+        likes: Math.floor(Math.random() * 5000) + 500,
+        reposts: Math.floor(Math.random() * 500) + 50,
+        replies: [],
+        isPlayerPost: true,
+        resolvedEventId: null,
+        createdAt: Date.now(),
+      }
+      await LocalWorldSessionService.addPost(session.id, activityPost)
+
+      // NPC reaction posts
+      for (const fp of result.feedPosts) {
+        const post: Post = {
+          id: generateId(),
+          sessionId: session.id,
+          authorCharacterId: fp.characterId,
+          authorUserId: null,
+          content: fp.content,
+          likes: fp.likes,
+          reposts: fp.reposts,
+          replies: [],
+          isPlayerPost: false,
+          resolvedEventId: null,
+          createdAt: Date.now(),
+        }
+        await LocalWorldSessionService.addPost(session.id, post)
+      }
+
+      const totalActions = (ctx.playerSlot.gameState.totalActionsThisSession || 0) + 1
+      await LocalWorldSessionService.updatePlayerState(session.id, ctx.playerSlot.userId, {
+        totalActionsThisSession: totalActions,
+      })
+
+      await refreshSession()
+      return result
+    } catch (e: any) {
+      showToast(e.message, 'error')
+      return null
+    } finally {
+      setIsGenerating(false)
+    }
+  }, [session])
+
+  const advanceDay = useCallback(async (): Promise<{ daySummary: string; hasEvent: boolean } | null> => {
+    const ctx = getContext()
+    if (!ctx || !session) return null
+    setIsGenerating(true)
+    try {
+      const result = await generateDayAdvance(
+        ctx.worldState, ctx.storyArc, ctx.playerSlot.gameState,
+        ctx.playerCharacter, ctx.worldState.characters, session.sharedFeed,
+      )
+
+      // Advance day
+      await dispatch({ type: 'DAY_ADVANCED', payload: { newDay: ctx.worldState.dayNumber + 1 } })
+
+      // Add NPC posts
+      for (const p of result.npcPosts) {
+        const post: Post = {
+          id: generateId(),
+          sessionId: session.id,
+          authorCharacterId: p.characterId,
+          authorUserId: null,
+          content: p.content,
+          likes: p.likes,
+          reposts: p.reposts,
+          replies: [],
+          isPlayerPost: false,
+          resolvedEventId: null,
+          createdAt: Date.now(),
+        }
+        await LocalWorldSessionService.addPost(session.id, post)
+      }
+
+      // Add event if generated
+      if (result.randomEvent) {
+        const event: GameEvent = {
+          id: generateId(),
+          sessionId: session.id,
+          title: result.randomEvent.title,
+          description: result.randomEvent.description,
+          xpMin: result.randomEvent.xpMin,
+          xpMax: result.randomEvent.xpMax,
+          suggestions: result.randomEvent.suggestions,
+          resolvedByUserId: null,
+          resolvedByResponse: null,
+          isFromStoryArc: false,
+          createdAt: Date.now(),
+        }
+        await LocalWorldSessionService.addEvent(session.id, event)
+      }
+
+      await refreshSession()
+      return { daySummary: result.daySummary, hasEvent: !!result.randomEvent }
+    } catch (e: any) {
+      showToast(e.message, 'error')
+      return null
+    } finally {
+      setIsGenerating(false)
+    }
+  }, [session])
+
+  return { isGenerating, generateNewEvent, handlePlayerAction, loadInitialFeed, sendDM, getWorldInspiration, initWorld, doActivity, advanceDay }
 }
