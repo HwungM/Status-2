@@ -250,6 +250,12 @@ export interface ActionResult {
   tensionDelta: number
   newConsequences: { type: string; description: string; triggerInNActions: number }[]
   triggerPlannedEvent: boolean
+  scandalTriggered?: {
+    severity: 'minor' | 'major' | 'career-ending'
+    cause: string
+    followerLossPerTick: number
+    ticksRemaining: number
+  } | null
 }
 
 export async function resolvePlayerAction(
@@ -277,10 +283,14 @@ Respond in JSON:
   ],
   "tensionDelta": 5,
   "newConsequences": [],
-  "triggerPlannedEvent": false
+  "triggerPlannedEvent": false,
+  "scandalTriggered": null
 }
 
-Generate 3-5 NPC reaction posts. followersGained can be negative. Make consequences from controversial actions.`
+Generate 3-5 NPC reaction posts. followersGained can be negative. Make consequences from controversial actions.
+If the player does something risky, controversial, or when drama scale warrants it, set scandalTriggered to:
+{ "severity": "minor|major|career-ending", "cause": "brief explanation", "followerLossPerTick": 500, "ticksRemaining": 3 }
+Otherwise keep scandalTriggered as null.`
 
   const raw = await callOpenAI([
     { role: 'system', content: system },
@@ -470,6 +480,39 @@ Generate 4-7 NPC posts reflecting the current story arc and what happened in pre
     { role: 'user', content: prompt },
   ])
   return JSON.parse(raw) as DayAdvanceResult
+}
+
+export async function generateNPCAutonomousPost(
+  worldState: WorldState,
+  storyArc: StoryArc,
+  playerState: PlayerGameState,
+  playerCharacter: Character,
+  allCharacters: Character[],
+  recentFeed: Post[],
+): Promise<{ characterId: string; content: string; likes: number; reposts: number; mentionsPlayer: boolean }[]> {
+  const system = buildMasterSystemPrompt(worldState, storyArc, playerState, playerCharacter, allCharacters, recentFeed)
+
+  const prompt = `Generate 1-2 organic NPC social media posts that happen without the player's involvement.
+
+NPCs should interact with each other, have their own drama, post about their lives. Only occasionally mention the player.
+Match each character's voice exactly. Write like real social media — short, punchy, platform-native.
+
+Respond in JSON:
+{
+  "posts": [
+    { "characterId": "exact_character_id", "content": "post content", "likes": 3200, "reposts": 120, "mentionsPlayer": false }
+  ]
+}
+
+Generate 1-2 posts. mentionsPlayer should be true only if the post explicitly tags or mentions ${playerCharacter.name} (@${playerCharacter.handle}).`
+
+  const raw = await callOpenAI([
+    { role: 'system', content: system },
+    { role: 'user', content: prompt },
+  ])
+
+  const parsed = JSON.parse(raw)
+  return parsed.posts || []
 }
 
 export async function generateSideQuests(
