@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   TextInput, Modal, ActivityIndicator, ScrollView, RefreshControl,
@@ -20,6 +20,7 @@ import { Post, GameEvent } from '@/types'
 import { LocalWorldSessionService } from '@/services/worldSessionService'
 import { generateId } from '@/utils/generateId'
 import { formatFollowerCount } from '@/utils/statHelpers'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const ACTIVITY_TYPES = [
   { id: 'Collab Post', emoji: '🤝', label: 'Collab' },
@@ -59,6 +60,7 @@ export default function FeedScreen() {
   const { isGenerating, generateNewEvent, handlePlayerAction, loadInitialFeed, doActivity } = useAI()
   useGameLoop()
 
+  const [hasApiKey, setHasApiKey] = useState(true)
   const [activeEvent, setActiveEvent] = useState<GameEvent | null>(null)
   const [eventModalVisible, setEventModalVisible] = useState(false)
   const [postComposerVisible, setPostComposerVisible] = useState(false)
@@ -77,6 +79,10 @@ export default function FeedScreen() {
   const [selectedCharIds, setSelectedCharIds] = useState<string[]>([])
   const [activityDesc, setActivityDesc] = useState('')
   const [activityStep, setActivityStep] = useState<'type' | 'chars' | 'desc'>('type')
+
+  useEffect(() => {
+    AsyncStorage.getItem('clout:groq_key').then(key => setHasApiKey(!!key && key.length > 10))
+  }, [])
 
   useEffect(() => {
     if (session) {
@@ -291,6 +297,12 @@ export default function FeedScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
+      {!hasApiKey && (
+        <TouchableOpacity style={styles.noKeyBanner} onPress={() => router.push('/settings')} activeOpacity={0.85}>
+          <Text style={styles.noKeyText}>⚠️ No API key set — tap here to add your Groq key in Settings</Text>
+        </TouchableOpacity>
+      )}
 
       {isSubmitting && (
         <View style={styles.processingBanner}>
@@ -645,6 +657,12 @@ const styles = StyleSheet.create({
   endDayBtnDisabled: { opacity: 0.5 },
   endDayText: { color: '#C4B5FD', fontSize: 12, fontWeight: '600' },
   headerIcon: { fontSize: 18, color: COLORS.textSecondary },
+  noKeyBanner: {
+    backgroundColor: '#7F1D1D',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  noKeyText: { color: '#FCA5A5', fontSize: 13, fontWeight: '600', textAlign: 'center' },
   processingBanner: {
     flexDirection: 'row',
     alignItems: 'center',

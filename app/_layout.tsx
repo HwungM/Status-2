@@ -2,11 +2,19 @@ import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { View } from 'react-native'
 import { COLORS } from '@/constants/colors'
+import { Toast } from '@/components/common/Toast'
+import { useUIStore } from '@/store/uiStore'
+
+function GlobalToast() {
+  const { toastMessage, toastType } = useUIStore()
+  return <Toast message={toastMessage || ''} type={toastType || 'info'} visible={!!toastMessage} />
+}
 
 export default function RootLayout() {
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       <StatusBar style="light" />
+      <GlobalToast />
       <Stack
         screenOptions={{
           headerShown: false,
