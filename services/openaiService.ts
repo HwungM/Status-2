@@ -140,12 +140,13 @@ MADNESS SCALE BEHAVIOR:
 - 81-100 (Bonkers): Anything goes. Maximum chaos.
 
 WRITING RULES — CRITICAL:
-- Write like a REAL person on social media. Short. Casual. Emoji where it fits.
-- NEVER write lines like "I see I have a new rival" or "watch your back" or villain-speak.
-- Show don't tell: if someone is jealous, they post something subtly shady, not a speech.
-- Characters have their OWN lives — most posts are NOT about the player. Only mention the player when it naturally makes sense.
-- Vary post types: opinions, jokes, selfie captions, hot takes, personal news, reactions to trends.
-- The player's handle is @${playerCharacter.handle} — only use it when a character would actually tag them.
+- Write like a REAL person on social media. Lowercase, casual, punchy. Emoji only when it fits naturally.
+- NEVER write villain lines like "I see I have a new rival" / "watch your back" / "mark my words". Those are cringe.
+- Show don't tell. Jealousy = subtly shady vague post, not an announcement. Interest = liking a post, not a declaration.
+- Be SPECIFIC to this world/fandom. Reference actual places, events, character names, lore — not generic drama.
+- Characters have their OWN lives outside the player. Most content should feel like it exists independently.
+- Wit and humor come first. Drama is seasoning, not the whole meal.
+- The player's handle is @${playerCharacter.handle} — only tag them when genuinely warranted, not every post.
 - ALL responses must be valid JSON. characterId must be the exact id string from the CHARACTERS list above.`
 }
 
@@ -370,18 +371,40 @@ export async function generateFeedPosts(
     .map(c => `id="${c.id}" @${c.handle}`)
     .join(', ')
 
-  const prompt = `Generate 6-10 NPC social media posts. Make this feel like a REAL social media timeline — an entire ecosystem of conversations happening without the player.
+  const worldDetail = `Setting: ${worldState.worldSetting}. Fandom: ${worldState.fandom || 'original'}. Day ${worldState.dayNumber}.`
 
+  const prompt = `Generate 7-10 NPC social media posts for this world's timeline.
+
+${worldDetail}
 Available characters: ${npcList}
 
-REQUIREMENTS:
-- Each post must have 1-6 replies from OTHER characters (not the post author)
-- Some posts are just about their own lives (opinions, jokes, flex, rant, selfie caption)
-- Some posts are conversations between NPCs that have nothing to do with the player
-- Only 1-2 posts max should mention the player (@${playerCharacter.handle})
-- Vary tone: funny, dramatic, thirsty, annoyed, hype, cryptic vague posts
-- Likes/reposts should vary WILDLY: some posts flop (12 likes), some go viral (45K likes)
-- Replies should have their own likes and feel like a real comment section
+This is a LIVING social media world. The posts should feel like you opened Twitter/X right now and this is what's happening. Make it feel REAL.
+
+POST VARIETY (mix these):
+- Slice of life specific to THIS world/fandom (not generic — reference actual places, events, people from the setting)
+- Hot takes and opinions that other characters would argue about
+- Cryptic vague posts ("some people really need to check themselves 🙄")
+- Humble brags disguised as complaints
+- Two characters already mid-argument in the replies
+- One totally random funny post that has nothing to do with drama
+- A "gossip/news account" style post about something that just happened in this world
+- A low follower count post that flopped (8 likes, 0 replies) — not everything goes viral
+
+WRITING STYLE — CRITICAL:
+- lowercase most of the time, like real twitter
+- specific references to the world (character names, locations, events, lore)
+- replies CHAIN off each other with @mentions — reply 2 is responding to reply 1, not the original post
+- wit > drama. make it funny and sharp first, dramatic second
+- characters have personality quirks that come through (the sarcastic one, the dramatic one, the hype beast, etc.)
+- NO generic phrases like "I'm not one to gossip but..." or "just saying..." — be specific
+
+ENGAGEMENT REALISM:
+- Big accounts: 10K-500K likes on bangers, 500-5K on regular posts
+- Small/new accounts: 50-2K likes
+- Some posts genuinely flop: 8-80 likes
+- Reposts = roughly 5-15% of likes
+
+Replies should feel like a comment section that's alive — people reacting to each other, not just the original post. Use @handles in replies.
 
 Respond ONLY in JSON:
 {
@@ -392,7 +415,8 @@ Respond ONLY in JSON:
       "likes": 3200,
       "reposts": 120,
       "replies": [
-        { "characterId": "exact_id", "content": "reply text", "likes": 89 }
+        { "characterId": "exact_id", "content": "@handle reply text", "likes": 890 },
+        { "characterId": "exact_id", "content": "@handle replying to previous reply", "likes": 340 }
       ]
     }
   ]
