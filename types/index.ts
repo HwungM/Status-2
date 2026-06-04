@@ -12,6 +12,7 @@ export interface WorldSession {
   sharedNotifications: Notification[]
   worldState: WorldState
   storyArc: StoryArc
+  dmConversations: Record<string, DMMessage[]>
   createdAt: number
   updatedAt: number
 }
@@ -113,6 +114,13 @@ export interface PlayerGameState {
   totalActionsThisSession: number
 }
 
+export interface DMMessage {
+  id: string
+  role: 'player' | 'npc'
+  content: string
+  createdAt: number
+}
+
 export interface RelationshipEntry {
   value: number
   flavorText: string
@@ -164,6 +172,10 @@ export interface Reply {
   content: string
   likes: number
   createdAt: number
+  // Phantom NPC fields — set when reply is from a generated random account
+  phantomName?: string
+  phantomHandle?: string
+  phantomFollowerCount?: number
 }
 
 // ─── EVENTS ──────────────────────────────────────────────────────

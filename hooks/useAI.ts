@@ -73,12 +73,12 @@ export function useAI() {
         await dispatch({ type: 'TENSION_CHANGED', payload: { delta: result.tensionDelta, newTension: Math.min(100, Math.max(0, ctx.storyArc.currentTension + result.tensionDelta)) } })
       }
 
-      // Attach postReplies to the player's most recent post
-      if (result.postReplies && result.postReplies.length > 0) {
+      // Attach postReplies + phantomReplies to the player's most recent post
+      if ((result.postReplies?.length > 0) || (result.phantomReplies?.length > 0)) {
         const freshSession = await LocalWorldSessionService.getSession(session.id)
         const playerPost = freshSession?.sharedFeed.find(p => p.isPlayerPost)
         if (playerPost) {
-          const newReplies: Reply[] = result.postReplies.map(r => ({
+          const namedReplies: Reply[] = (result.postReplies || []).map(r => ({
             id: generateId(),
             postId: playerPost.id,
             authorCharacterId: r.characterId,
@@ -86,7 +86,21 @@ export function useAI() {
             likes: r.likes,
             createdAt: Date.now(),
           }))
-          await LocalWorldSessionService.updatePostReplies(session.id, playerPost.id, [...playerPost.replies, ...newReplies])
+          const phantomReplies: Reply[] = (result.phantomReplies || []).map(r => ({
+            id: generateId(),
+            postId: playerPost.id,
+            authorCharacterId: `phantom_${r.handle}`,
+            content: r.content,
+            likes: r.likes,
+            createdAt: Date.now(),
+            phantomName: r.name,
+            phantomHandle: r.handle,
+            phantomFollowerCount: r.followerCount,
+          }))
+          // Interleave: named replies first, then phantom, then shuffle slightly
+          const allReplies = [...namedReplies, ...phantomReplies]
+            .sort((a, b) => b.likes - a.likes) // sort by likes desc for realistic ordering
+          await LocalWorldSessionService.updatePostReplies(session.id, playerPost.id, [...playerPost.replies, ...allReplies])
         }
       }
 
@@ -310,6 +324,7 @@ export function useAI() {
   const sendDM = useCallback(async (
     characterId: string,
     history: { role: 'player' | 'npc'; content: string }[],
+    playerFollowerCount: number = 0,
   ): Promise<string | null> => {
     const ctx = getContext()
     if (!ctx || !session) return null
@@ -317,7 +332,7 @@ export function useAI() {
     try {
       const character = ctx.worldState.characters.find(c => c.id === characterId)
       if (!character) return null
-      const response = await generateDMResponse(character, history, ctx.worldState, ctx.storyArc)
+      const response = await generateDMResponse(character, history, ctx.worldState, ctx.storyArc, playerFollowerCount)
       return response
     } catch (e: any) {
       showToast(e.message, 'error')

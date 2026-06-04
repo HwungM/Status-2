@@ -35,9 +35,16 @@ export async function testApiKey(key: string): Promise<{ ok: boolean; error?: st
   }
 }
 
-async function callOpenAI(messages: { role: string; content: string }[], signal?: AbortSignal): Promise<string> {
+async function callOpenAI(messages: { role: string; content: string }[], signal?: AbortSignal, plainText = false): Promise<string> {
   const apiKey = await getApiKey()
   if (!apiKey) throw new Error('No Groq API key configured. Go to Settings to add your key.')
+
+  const body: any = {
+    model: 'llama-3.3-70b-versatile',
+    messages,
+    temperature: 0.9,
+  }
+  if (!plainText) body.response_format = { type: 'json_object' }
 
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -45,12 +52,7 @@ async function callOpenAI(messages: { role: string; content: string }[], signal?
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
-      messages,
-      response_format: { type: 'json_object' },
-      temperature: 0.9,
-    }),
+    body: JSON.stringify(body),
     signal,
   })
 
@@ -124,6 +126,14 @@ PLAYER: id="${playerCharacter.id}" name="${playerCharacter.name}" handle="@${pla
 
 RECENT FEED (last 20):
 ${feedContext || 'Feed is empty — this is the beginning.'}
+
+PLAYER STATS (use these names only in statChanges):
+- charisma: social magnetism and charm
+- looks: appearance, style, presentation
+- luck: random opportunities and serendipity
+- strength: mental toughness, resilience under pressure
+- wit: humor, timing, comedic intelligence
+- hustle: work ethic, grind, consistency
 
 CHEMISTRY TYPES (shape how characters interact):
 - rivals: shade, subtweeting, vague posting, indirect competition — NEVER say "rival" out loud
@@ -264,6 +274,14 @@ Respond in JSON:
   }
 }
 
+export interface PhantomNPCReply {
+  name: string
+  handle: string
+  content: string
+  likes: number
+  followerCount: number
+}
+
 export interface ActionResult {
   xpGained: number
   followersGained: number
@@ -272,6 +290,7 @@ export interface ActionResult {
   narrativeResult: string
   newNpcPosts: { characterId: string; content: string; likes: number; reposts: number }[]
   postReplies: { characterId: string; content: string; likes: number }[]
+  phantomReplies: PhantomNPCReply[]
   tensionDelta: number
   newConsequences: { type: string; description: string; triggerInNActions: number }[]
   triggerPlannedEvent: boolean
@@ -305,7 +324,11 @@ export async function resolvePlayerAction(
     })
     .filter(Boolean).join(', ')
 
+  const playerFollowers = playerState.followerCount
+  const followerTier = playerFollowers < 5000 ? 'micro' : playerFollowers < 50000 ? 'rising' : playerFollowers < 500000 ? 'established' : 'mega'
+
   const prompt = `Player action: "${playerAction}"
+Player followers: ${playerFollowers.toLocaleString()} (${followerTier}-level account)
 
 Current relationships: ${relContext || 'none yet'}
 Available NPC ids: ${npcList}
@@ -313,31 +336,44 @@ Available NPC ids: ${npcList}
 You are a NEUTRAL, realistic narrator. Outcomes must be EARNED, not given.
 
 OUTCOME RULES:
-- Safe, generic posts: small gains (+50 to +200 followers, +1-3 aura)
-- Strong, on-brand posts: medium gains (+200 to +800, +3-8 aura)
+- Safe, generic posts: small gains (+50 to +200 followers, +1-3 charisma)
+- Strong, on-brand posts: medium gains (+200 to +800, +3-8 charisma)
 - Controversial/risky: could go either way — big gain OR big loss, negative relationship changes
-- Cringe/off-brand: lose followers (-100 to -500), lose aura (-2 to -8), NPCs mock or ignore
+- Cringe/off-brand: lose followers (-100 to -500), lose stats, NPCs mock or ignore
 - Posts directed at specific characters: MUST affect that character's relationship (positive or negative depending on chemistry)
 - Rivals/enemies chemistry: their relationship should go DOWN when player does well (jealousy), they post shade
 - Friends/lovers: defend and hype the player, relationship goes UP
 - Strangers: don't react unless the post is directly about them
+- Stats to use: charisma, looks, luck, strength, wit, hustle
 
-POST REPLIES (2-5 replies directly on the player's post from NPCs, like Twitter replies):
-- Mix of supportive, neutral, and negative replies based on the NPCs' chemistry with player
-- Rivals post shade, sarcasm, or just ignore
-- Friends hype, defend, join in
-- Enemies drag, ratio, callout
-- Strangers curious or indifferent
+FOLLOWER TIER RULES (affects who responds):
+- micro (<5K): big celebs ignore you completely. Random internet people reply. A few mid-tier NPCs might notice.
+- rising (5K-50K): some NPCs start paying attention. Established accounts might shade or like.
+- established (50K-500K): real NPCs engage. Some big ones react. The world notices.
+- mega (500K+): everyone responds. Big names engage. Everything has weight.
+
+POST REPLIES — 2-6 replies directly on the player's post:
+- Named NPC replies: from the available NPC character list (only ones who would realistically notice the player's follower tier)
+- Mix of supportive, neutral, negative based on chemistry
+
+PHANTOM REPLIES — 3-8 replies from RANDOM internet users (not on the NPC list):
+- These are regular people, fans, trolls, critics, bots
+- Give each a realistic @handle (lowercase, no spaces, under 20 chars), a name, follower count (100-50000)
+- Their content reflects the post's virality and tone
+- Make them feel REAL — specific, human reactions, not generic "nice post!" replies
 
 Respond ONLY in JSON:
 {
   "xpGained": 15,
   "followersGained": 200,
-  "statChanges": [{ "stat": "aura", "delta": 3, "flavorText": "brief why" }],
+  "statChanges": [{ "stat": "charisma", "delta": 3, "flavorText": "brief why" }],
   "relationshipChanges": [{ "characterId": "exact_id_from_list", "delta": -8, "flavorText": "brief why" }],
   "narrativeResult": "1 sentence of what just happened in the world",
   "postReplies": [
-    { "characterId": "exact_id", "content": "reply text under 100 chars", "likes": 340 }
+    { "characterId": "exact_id", "content": "reply text under 120 chars", "likes": 340 }
+  ],
+  "phantomReplies": [
+    { "name": "Jasmine K", "handle": "jasminek_nyc", "content": "reply text", "likes": 23, "followerCount": 847 }
   ],
   "newNpcPosts": [
     { "characterId": "exact_id", "content": "standalone post reacting to the moment", "likes": 1200, "reposts": 45 }
@@ -355,6 +391,7 @@ Respond ONLY in JSON:
 
   const parsed = JSON.parse(raw) as ActionResult
   if (!parsed.postReplies) parsed.postReplies = []
+  if (!parsed.phantomReplies) parsed.phantomReplies = []
   return parsed
 }
 
@@ -436,7 +473,27 @@ export async function generateDMResponse(
   conversationHistory: { role: 'player' | 'npc'; content: string }[],
   worldState: WorldState,
   storyArc: StoryArc,
-): Promise<string> {
+  playerFollowerCount: number,
+): Promise<string | null> {
+  // Ghost logic: bigger celeb = less likely to respond to small accounts
+  const celebFollowers = character.followerCount
+  const ratio = celebFollowers / Math.max(playerFollowerCount, 1)
+
+  // Ghost probability increases with follower gap
+  // e.g. celeb has 10M, player has 1K => ratio=10000 => 90% ghost chance
+  // celeb has 100K, player has 50K => ratio=2 => 10% ghost
+  let ghostChance = 0
+  if (ratio > 1000) ghostChance = 0.90
+  else if (ratio > 100) ghostChance = 0.70
+  else if (ratio > 20) ghostChance = 0.40
+  else if (ratio > 5) ghostChance = 0.15
+  else ghostChance = 0.05
+
+  // First message is always responded to (give the player a chance)
+  if (conversationHistory.filter(m => m.role === 'npc').length === 0) ghostChance = Math.min(ghostChance, 0.3)
+
+  if (Math.random() < ghostChance) return null
+
   const historyMessages = conversationHistory.map(m => ({
     role: m.role === 'player' ? 'user' : 'assistant',
     content: m.content,
@@ -446,17 +503,18 @@ export async function generateDMResponse(
 Your bio: ${character.bio}
 Your personality: ${character.description}
 Current story tension: ${storyArc.currentTension}/100
-Arc: ${storyArc.arcSummary}
 
-Respond as ${character.name} via DM. Be in character. Be concise. Write like real DMs.
-Respond with plain text only — no JSON, no formatting.`
+The person DMing you has ${playerFollowerCount.toLocaleString()} followers. ${ratio > 100 ? 'They\'re a much smaller account — be somewhat guarded or distant unless their message is genuinely compelling.' : ratio > 10 ? 'They\'re smaller than you but not nobody.' : 'You\'re at a similar level — treat them as a peer.'}
+
+Respond as ${character.name} via DM. Be in character. Keep it short — 1-3 sentences max. Write like real DMs: lowercase, casual, no punctuation overkill.
+Do NOT use JSON. Just write the response as plain text.`
 
   const raw = await callOpenAI([
     { role: 'system', content: system },
     ...historyMessages,
-  ])
+  ], undefined, true)
 
-  return raw
+  return raw.trim()
 }
 
 export async function generateWorldInspiration(

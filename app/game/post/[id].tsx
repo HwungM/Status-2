@@ -166,21 +166,35 @@ export default function PostDetailScreen() {
             <Text style={styles.noReplies}>No replies yet. Be the first.</Text>
           ) : (
             replies.map((reply) => {
-              const replyChar = allChars.find(c => c.id === reply.authorCharacterId)
+              const isPhantom = reply.authorCharacterId.startsWith('phantom_')
+              const replyChar = isPhantom ? null : allChars.find(c => c.id === reply.authorCharacterId)
               const isPlayerReply = reply.authorCharacterId === playerChar?.id
+
+              const displayName = isPhantom ? (reply.phantomName || 'Someone') : (replyChar?.name || 'Unknown')
+              const displayHandle = isPhantom ? (reply.phantomHandle || 'user') : (replyChar?.handle || 'unknown')
+
               return (
                 <View key={reply.id} style={styles.replyItem}>
-                  <TouchableOpacity onPress={() => replyChar && router.push(`/game/character/${replyChar.id}`)}>
-                    <Avatar uri={replyChar?.avatar} size={40} />
+                  <TouchableOpacity
+                    onPress={() => !isPhantom && replyChar && router.push(`/game/character/${replyChar.id}`)}
+                    disabled={isPhantom}
+                  >
+                    {isPhantom
+                      ? <View style={styles.phantomAvatar}><Text style={styles.phantomAvatarText}>{displayName[0]}</Text></View>
+                      : <Avatar uri={replyChar?.avatar} size={40} />
+                    }
                   </TouchableOpacity>
                   <View style={styles.replyBody}>
                     <View style={styles.replyNameRow}>
-                      <Text style={styles.replyName}>{replyChar?.name || 'Unknown'}</Text>
+                      <Text style={styles.replyName}>{displayName}</Text>
                       {replyChar?.isVerified && (
                         <View style={styles.replyVerified}><Text style={styles.verifiedText}>✓</Text></View>
                       )}
-                      <Text style={styles.replyHandle}> @{replyChar?.handle || 'unknown'}</Text>
+                      <Text style={styles.replyHandle}> @{displayHandle}</Text>
                       {isPlayerReply && <View style={styles.youBadge}><Text style={styles.youBadgeText}>you</Text></View>}
+                      {isPhantom && reply.phantomFollowerCount && (
+                        <Text style={styles.phantomFollowers}> · {formatCount(reply.phantomFollowerCount)}</Text>
+                      )}
                     </View>
                     <Text style={styles.replyText}>{reply.content}</Text>
                     <View style={styles.replyFooter}>
@@ -244,4 +258,7 @@ const styles = StyleSheet.create({
   replyFooterSep: { color: COLORS.divider },
   replyFooterText: { color: COLORS.textSecondary, fontSize: 13 },
   endPadding: { height: 60 },
+  phantomAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#2A2A2A', alignItems: 'center', justifyContent: 'center' },
+  phantomAvatarText: { color: '#9CA3AF', fontSize: 16, fontWeight: '700' },
+  phantomFollowers: { color: '#6B7280', fontSize: 11 },
 })

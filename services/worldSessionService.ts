@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import {
   WorldSession, WorldState, StoryArc, Post, GameEvent,
-  PlayerGameState, GameAction, Notification, PlayerSlot,
+  PlayerGameState, GameAction, Notification, PlayerSlot, DMMessage,
 } from '@/types'
 import { generateInviteCode } from '@/utils/inviteCode'
 import { xpToNextLevel } from '@/utils/xpCalc'
@@ -38,6 +38,8 @@ export interface IWorldSessionService {
   dispatchAction(sessionId: string, action: GameAction): Promise<void>
   addNotification(sessionId: string, notification: Notification): Promise<void>
   updatePostReplies(sessionId: string, postId: string, replies: import('@/types').Reply[]): Promise<void>
+  getDMHistory(sessionId: string, characterId: string): Promise<DMMessage[]>
+  addDMMessage(sessionId: string, characterId: string, message: DMMessage): Promise<void>
   deleteSession(sessionId: string): Promise<void>
   clearAllData(): Promise<void>
 }
@@ -56,8 +58,8 @@ function createDefaultPlayerGameState(): PlayerGameState {
     level: 1,
     xp: 0,
     xpToNextLevel: xpToNextLevel(1),
-    followerCount: 1000,
-    stats: { aura: 50, humor: 50, charisma: 50, drama: 30 },
+    followerCount: 847,
+    stats: { charisma: 50, looks: 50, luck: 50, strength: 50, wit: 50, hustle: 30 },
     relationships: {},
     skills: {
       'Content Creation': { value: 10, pointsNeeded: 5, flavorText: 'Your ability to craft viral posts' },
@@ -150,6 +152,7 @@ export const LocalWorldSessionService: IWorldSessionService = {
         ],
       },
       storyArc,
+      dmConversations: {},
       createdAt: Date.now(),
       updatedAt: Date.now(),
     }
@@ -348,6 +351,22 @@ export const LocalWorldSessionService: IWorldSessionService = {
     if (!sessions[sessionId]) return
     const post = sessions[sessionId].sharedFeed.find(p => p.id === postId)
     if (post) post.replies = replies
+    sessions[sessionId].updatedAt = Date.now()
+    await saveAll(sessions)
+  },
+
+  async getDMHistory(sessionId, characterId) {
+    const sessions = await loadAll()
+    if (!sessions[sessionId]) return []
+    return sessions[sessionId].dmConversations?.[characterId] || []
+  },
+
+  async addDMMessage(sessionId, characterId, message) {
+    const sessions = await loadAll()
+    if (!sessions[sessionId]) return
+    if (!sessions[sessionId].dmConversations) sessions[sessionId].dmConversations = {}
+    if (!sessions[sessionId].dmConversations[characterId]) sessions[sessionId].dmConversations[characterId] = []
+    sessions[sessionId].dmConversations[characterId].push(message)
     sessions[sessionId].updatedAt = Date.now()
     await saveAll(sessions)
   },
