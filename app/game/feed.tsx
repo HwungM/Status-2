@@ -81,7 +81,7 @@ export default function FeedScreen() {
   const [activityStep, setActivityStep] = useState<'type' | 'chars' | 'desc'>('type')
 
   useEffect(() => {
-    AsyncStorage.getItem('clout:gemini_key').then(key => setHasApiKey(!!key && key.length > 10))
+    AsyncStorage.getItem('clout:gemini_key').then(key => setHasApiKey(!!key && key.length > 20))
   }, [])
 
   useEffect(() => {

@@ -90,7 +90,7 @@ export default function SettingsScreen() {
                 style={styles.input}
                 value={apiKey}
                 onChangeText={setApiKey}
-                placeholder="AIza..."
+                placeholder="AQ.Ab8..."
                 placeholderTextColor="#9CA3AF"
                 secureTextEntry={!showApiKey}
                 autoCapitalize="none"
