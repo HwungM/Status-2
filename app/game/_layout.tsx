@@ -62,6 +62,7 @@ export default function GameLayout() {
       />
       <Tabs.Screen name="messages/[characterId]" options={{ href: null }} />
       <Tabs.Screen name="character/[id]" options={{ href: null }} />
+      <Tabs.Screen name="post/[id]" options={{ href: null }} />
     </Tabs>
   )
 }
