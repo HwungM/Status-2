@@ -312,6 +312,22 @@ export const LocalWorldSessionService: IWorldSessionService = {
         slot.gameState.followerCount = Math.max(0, slot.gameState.followerCount - action.payload.followerLoss)
         break
       }
+      case 'SCANDAL_STARTED': {
+        session.worldState.scandalState = action.payload.scandal
+        break
+      }
+      case 'SCANDAL_TICK': {
+        const scandal = session.worldState.scandalState
+        if (scandal && scandal.active) {
+          if (!slot) break
+          slot.gameState.followerCount = Math.max(0, slot.gameState.followerCount - scandal.followerLossPerTick)
+          scandal.ticksRemaining -= 1
+          if (scandal.ticksRemaining <= 0) {
+            session.worldState.scandalState = { ...scandal, active: false }
+          }
+        }
+        break
+      }
     }
 
     session.updatedAt = Date.now()

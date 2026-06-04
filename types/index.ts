@@ -25,6 +25,25 @@ export interface PlayerSlot {
   lastSeenAt: number
 }
 
+export interface ScandalState {
+  active: boolean
+  severity: 'minor' | 'major' | 'career-ending'
+  cause: string
+  followerLossPerTick: number
+  ticksRemaining: number
+  canRecover: boolean
+}
+
+export interface LegendProgress {
+  followersReached: boolean
+  survivedScandal: boolean
+  mainGoalCompleted: boolean
+  relationshipsBuilt: boolean
+  rivalExists: boolean
+  act3Reached: boolean
+  legendUnlocked: boolean
+}
+
 export interface WorldState {
   dayNumber: number
   mainGoal: string
@@ -35,6 +54,8 @@ export interface WorldState {
   characters: Character[]
   milestones: Milestone[]
   sideQuests: SideQuest[]
+  scandalState?: ScandalState | null
+  legendProgress?: LegendProgress | null
 }
 
 // ─── STORY ARC ───────────────────────────────────────────────────
@@ -178,6 +199,8 @@ export type GameAction =
   | { type: 'CONSEQUENCE_QUEUED'; payload: { consequence: Consequence } }
   | { type: 'ACT_ADVANCED'; payload: { newAct: 1 | 2 | 3 } }
   | { type: 'SCANDAL_TRIGGERED'; payload: { description: string; followerLoss: number } }
+  | { type: 'SCANDAL_STARTED'; payload: { scandal: ScandalState } }
+  | { type: 'SCANDAL_TICK'; payload: {} }
   | { type: 'PLAYER_JOINED'; payload: { player: PlayerSlot } }
   | { type: 'PLAYER_LEFT'; payload: { userId: string } }
 

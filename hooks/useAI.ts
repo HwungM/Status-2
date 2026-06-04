@@ -6,14 +6,15 @@ import {
   generateDMResponse, initializeStoryArc, generateWorldInspiration,
   generateSideQuests, ActionResult,
   generateActivity, ActivityResult, generateDayAdvance, DayAdvanceResult,
+  generateNPCAutonomousPost,
 } from '@/services/openaiService'
 import { LocalWorldSessionService } from '@/services/worldSessionService'
 import { generateId } from '@/utils/generateId'
-import { Post, GameEvent, Notification } from '@/types'
+import { Post, GameEvent, Notification, LegendProgress, ScandalState } from '@/types'
 
 export function useAI() {
   const { session, dispatch, refreshSession } = useGameStore()
-  const { showToast } = useUIStore()
+  const { showToast, showViralMoment } = useUIStore()
   const [isGenerating, setIsGenerating] = useState(false)
 
   const getContext = () => {
@@ -111,6 +112,26 @@ export function useAI() {
         await LocalWorldSessionService.addNotification(session.id, notification)
       }
 
+      // Viral moment check
+      if (result.followersGained > 2000) {
+        showViralMoment({ followersGained: result.followersGained, narrativeResult: result.narrativeResult })
+      }
+
+      // Scandal check
+      if (result.scandalTriggered) {
+        const scandal: ScandalState = {
+          active: true,
+          severity: result.scandalTriggered.severity,
+          cause: result.scandalTriggered.cause,
+          followerLossPerTick: result.scandalTriggered.followerLossPerTick,
+          ticksRemaining: result.scandalTriggered.ticksRemaining,
+          canRecover: result.scandalTriggered.severity !== 'career-ending',
+        }
+        await dispatch({ type: 'SCANDAL_STARTED', payload: { scandal } })
+        await dispatch({ type: 'FOLLOWERS_GAINED', payload: { userId: ctx.playerSlot.userId, amount: -result.scandalTriggered.followerLossPerTick, reason: 'Scandal shock' } })
+        showToast("You're being cancelled! 😱", 'error')
+      }
+
       // Day progression
       const totalActions = (ctx.playerSlot.gameState.totalActionsThisSession || 0) + 1
       await LocalWorldSessionService.updatePlayerState(session.id, ctx.playerSlot.userId, {
@@ -118,12 +139,91 @@ export function useAI() {
       })
 
       await refreshSession()
+
+      // Legend progress check (after refreshSession so we have latest state)
+      await checkAndUpdateLegendProgress(session.id, ctx.playerSlot.userId)
+
       return result
     } catch (e: any) {
       showToast(e.message, 'error')
       return null
     } finally {
       setIsGenerating(false)
+    }
+  }, [session])
+
+  const checkAndUpdateLegendProgress = async (sessionId: string, userId: string) => {
+    const freshSession = await LocalWorldSessionService.getSession(sessionId)
+    if (!freshSession) return
+    const slot = freshSession.players.find(p => p.userId === userId)
+    if (!slot) return
+    const gs = slot.gameState
+    const ws = freshSession.worldState
+    const arc = freshSession.storyArc
+
+    const followersReached = gs.followerCount >= 500000
+    const mainGoalCompleted = gs.mainGoalProgress >= 100
+    const relationshipsBuilt = Object.values(gs.relationships).filter(r => r.value > 50).length >= 3
+    const rivalExists = Object.values(gs.relationships).some(r => r.chemistry === 'rivals' || r.chemistry === 'enemies')
+    const act3Reached = arc.act === 3
+    const existingLegend = ws.legendProgress
+    const survivedScandal = existingLegend?.survivedScandal || (ws.scandalState && !ws.scandalState.active && ws.scandalState.ticksRemaining <= 0) || false
+
+    const legendUnlocked = followersReached && !!survivedScandal && mainGoalCompleted && relationshipsBuilt && rivalExists && act3Reached
+
+    await LocalWorldSessionService.updateWorldState(sessionId, {
+      legendProgress: {
+        followersReached,
+        survivedScandal: !!survivedScandal,
+        mainGoalCompleted,
+        relationshipsBuilt,
+        rivalExists,
+        act3Reached,
+        legendUnlocked,
+      },
+    })
+  }
+
+  const triggerNPCAutonomousPost = useCallback(async () => {
+    const ctx = getContext()
+    if (!ctx || !session) return
+    try {
+      const npcPosts = await generateNPCAutonomousPost(
+        ctx.worldState, ctx.storyArc, ctx.playerSlot.gameState,
+        ctx.playerCharacter, ctx.worldState.characters, session.sharedFeed,
+      )
+      for (const np of npcPosts) {
+        const post: Post = {
+          id: generateId(),
+          sessionId: session.id,
+          authorCharacterId: np.characterId,
+          authorUserId: null,
+          content: np.content,
+          likes: np.likes,
+          reposts: np.reposts,
+          replies: [],
+          isPlayerPost: false,
+          resolvedEventId: null,
+          createdAt: Date.now(),
+        }
+        await LocalWorldSessionService.addPost(session.id, post)
+        if (np.mentionsPlayer) {
+          const notification: Notification = {
+            id: generateId(),
+            sessionId: session.id,
+            type: 'reaction',
+            sourceCharacterId: np.characterId,
+            title: 'mentioned you in a post',
+            preview: np.content.slice(0, 100),
+            createdAt: Date.now(),
+            isRead: false,
+          }
+          await LocalWorldSessionService.addNotification(session.id, notification)
+        }
+      }
+      await refreshSession()
+    } catch (e) {
+      // silent fail for autonomous posts
     }
   }, [session])
 
