@@ -174,12 +174,11 @@ export function useAI() {
       // Legend progress check (after refreshSession so we have latest state)
       await checkAndUpdateLegendProgress(session.id, ctx.playerSlot.userId)
 
-      // Auto-advance day every 5 actions (fire and forget)
+      // Auto-advance day every 5 actions (delayed, non-blocking)
       if (totalActions % 5 === 0) {
-        const freshSession2 = await LocalWorldSessionService.getSession(session.id)
-        const nextDay = (freshSession2?.worldState.dayNumber ?? ctx.worldState.dayNumber) + 1
+        const nextDay = ctx.worldState.dayNumber + 1
         showToast(`🌙 Day ${nextDay} begins...`, 'info')
-        advanceDay().catch(() => {})
+        setTimeout(() => advanceDay().catch(() => {}), 500)
       }
 
       return result
@@ -431,12 +430,11 @@ export function useAI() {
 
       await refreshSession()
 
-      // Auto-advance day every 5 actions (fire and forget)
+      // Auto-advance day every 5 actions (delayed, non-blocking)
       if (totalActions % 5 === 0) {
-        const freshSession2 = await LocalWorldSessionService.getSession(session.id)
-        const nextDay = (freshSession2?.worldState.dayNumber ?? ctx.worldState.dayNumber) + 1
+        const nextDay = ctx.worldState.dayNumber + 1
         showToast(`🌙 Day ${nextDay} begins...`, 'info')
-        advanceDay().catch(() => {})
+        setTimeout(() => advanceDay().catch(() => {}), 500)
       }
 
       return result
