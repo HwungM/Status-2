@@ -2,7 +2,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { StoryArc, Character, PlayerGameState, WorldState, GameEvent, Post } from '@/types'
 import { generateId } from '@/utils/generateId'
 
-const API_KEY_STORAGE = 'clout:groq_key'
+const API_KEY_STORAGE = 'clout:gemini_key'
+const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
+const GEMINI_MODEL = 'gemini-2.0-flash'
 
 async function getApiKey(): Promise<string | null> {
   return AsyncStorage.getItem(API_KEY_STORAGE)
@@ -14,14 +16,14 @@ export async function saveApiKey(key: string): Promise<void> {
 
 export async function testApiKey(key: string): Promise<{ ok: boolean; error?: string }> {
   try {
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const response = await fetch(GEMINI_BASE_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${key}`,
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: GEMINI_MODEL,
         messages: [{ role: 'user', content: 'Reply with the single word: ok' }],
         max_tokens: 5,
       }),
@@ -37,17 +39,17 @@ export async function testApiKey(key: string): Promise<{ ok: boolean; error?: st
 
 async function callOpenAI(messages: { role: string; content: string }[], signal?: AbortSignal, plainText = false): Promise<string> {
   const apiKey = await getApiKey()
-  if (!apiKey) throw new Error('No Groq API key configured. Go to Settings to add your key.')
+  if (!apiKey) throw new Error('No Gemini API key configured. Go to Settings to add your key.')
 
   const body: any = {
-    model: 'llama-3.3-70b-versatile',
+    model: GEMINI_MODEL,
     messages,
     temperature: 0.9,
     max_tokens: 4096,
   }
   if (!plainText) body.response_format = { type: 'json_object' }
 
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+  const response = await fetch(GEMINI_BASE_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

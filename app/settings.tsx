@@ -21,10 +21,10 @@ export default function SettingsScreen() {
   const [keyError, setKeyError] = useState('')
 
   useEffect(() => {
-    AsyncStorage.multiGet(['clout:groq_key', 'clout:supabase_url', 'clout:supabase_key'])
+    AsyncStorage.multiGet(['clout:gemini_key', 'clout:supabase_url', 'clout:supabase_key'])
       .then(pairs => {
         const map = Object.fromEntries(pairs.map(([k, v]) => [k, v || '']))
-        setApiKey(map['clout:groq_key'])
+        setApiKey(map['clout:gemini_key'])
         setSupabaseUrl(map['clout:supabase_url'])
         setSupabaseKey(map['clout:supabase_key'])
       })
@@ -33,7 +33,7 @@ export default function SettingsScreen() {
   const handleSaveApiKey = async () => {
     const trimmed = apiKey.trim()
     if (!trimmed) {
-      Alert.alert('Missing Key', 'Please enter your Groq API key first.')
+      Alert.alert('Missing Key', 'Please enter your Gemini API key first.')
       return
     }
     setIsTesting(true)
@@ -83,14 +83,14 @@ export default function SettingsScreen() {
         <View style={styles.group}>
           <Text style={styles.groupTitle}>AI Configuration</Text>
           <View style={styles.inputRow}>
-            <Text style={styles.inputLabel}>Groq API Key</Text>
-            <Text style={styles.inputHint}>Powers all AI storytelling. Only sent to Groq. Never stored externally.</Text>
+            <Text style={styles.inputLabel}>Google Gemini API Key</Text>
+            <Text style={styles.inputHint}>Powers all AI storytelling. Free tier — no credit card needed. Only sent to Google. Never stored externally.</Text>
             <View style={styles.inputWithToggle}>
               <TextInput
                 style={styles.input}
                 value={apiKey}
                 onChangeText={setApiKey}
-                placeholder="gsk_..."
+                placeholder="AIza..."
                 placeholderTextColor="#9CA3AF"
                 secureTextEntry={!showApiKey}
                 autoCapitalize="none"
