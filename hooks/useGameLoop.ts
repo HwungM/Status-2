@@ -172,8 +172,8 @@ export function useGameLoop() {
     if (npcIntervalRef.current) clearInterval(npcIntervalRef.current)
     if (randomEventIntervalRef.current) clearInterval(randomEventIntervalRef.current)
 
-    // Fire immediately on mount so the feed starts populating right away
-    setTimeout(() => { if (appStateRef.current === 'active') triggerNPCAutonomousPost() }, 3000)
+    // Fire after feed has loaded to avoid rate limit collision
+    setTimeout(() => { if (appStateRef.current === 'active') triggerNPCAutonomousPost() }, 20000)
 
     npcIntervalRef.current = setInterval(() => {
       if (appStateRef.current === 'active') triggerNPCAutonomousPost()

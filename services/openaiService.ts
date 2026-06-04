@@ -49,7 +49,7 @@ async function callOpenAI(messages: { role: string; content: string }[], signal?
   }
   if (!plainText) body.response_format = { type: 'json_object' }
 
-  const response = await fetch(GEMINI_BASE_URL, {
+  const doFetch = () => fetch(GEMINI_BASE_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -59,9 +59,21 @@ async function callOpenAI(messages: { role: string; content: string }[], signal?
     signal,
   })
 
+  let response = await doFetch()
+
+  // Retry up to 3 times on rate limit with backoff
+  if (response.status === 429) {
+    const delays = [8000, 16000, 30000]
+    for (const delay of delays) {
+      await new Promise(r => setTimeout(r, delay))
+      response = await doFetch()
+      if (response.status !== 429) break
+    }
+  }
+
   if (!response.ok) {
     const err = await response.json().catch(() => ({}))
-    throw new Error(err.error?.message || `OpenAI API error: ${response.status}`)
+    throw new Error(err.error?.message || `API error: ${response.status}`)
   }
 
   const data = await response.json()

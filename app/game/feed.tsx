@@ -86,10 +86,11 @@ export default function FeedScreen() {
 
   useEffect(() => {
     if (session) {
+      // Stagger initial calls to avoid hitting Gemini rate limit
       loadInitialFeed()
       const pending = session.sharedEvents.find(e => !e.resolvedByUserId)
       if (pending) setActiveEvent(pending)
-      else loadNextEvent()
+      else setTimeout(() => loadNextEvent(), 10000) // delay event gen 10s after feed load
       const fc = session.players[0]?.gameState.followerCount
       if (fc !== undefined) setPrevFollowerCount(fc)
     }
