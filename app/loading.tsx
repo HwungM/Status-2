@@ -42,7 +42,8 @@ export default function LoadingScreen() {
       useNativeDriver: false,
     }).start()
 
-    // Initialize AI world
+    // Initialize AI world then navigate — fallback after 30s if something hangs
+    const fallback = setTimeout(() => router.replace('/game/feed'), 30000)
     const run = async () => {
       try {
         if (session) {
@@ -50,7 +51,8 @@ export default function LoadingScreen() {
           await loadInitialFeed()
         }
       } catch (_) {}
-      setTimeout(() => router.replace('/game/feed'), 6200)
+      clearTimeout(fallback)
+      router.replace('/game/feed')
     }
     run()
 

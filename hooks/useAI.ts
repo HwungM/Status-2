@@ -76,7 +76,8 @@ export function useAI() {
       // Attach postReplies + phantomReplies to the player's most recent post
       if ((result.postReplies?.length > 0) || (result.phantomReplies?.length > 0)) {
         const freshSession = await LocalWorldSessionService.getSession(session.id)
-        const playerPost = freshSession?.sharedFeed.find(p => p.isPlayerPost)
+        const feed = freshSession?.sharedFeed || []
+        const playerPost = [...feed].reverse().find(p => p.isPlayerPost)
         if (playerPost) {
           const namedReplies: Reply[] = (result.postReplies || []).map(r => ({
             id: generateId(),
