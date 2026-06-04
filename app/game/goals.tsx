@@ -160,23 +160,33 @@ export default function GoalsScreen() {
           </View>
         </View>
 
-        {/* Main goal */}
-        <View style={styles.goalCard}>
-          <Text style={styles.goalTitle}>{session.worldState.mainGoal}</Text>
-          <View style={styles.goalProgressRow}>
-            <View style={styles.goalProgressBg}>
-              <View style={[styles.goalProgressFill, { width: `${gs.mainGoalProgress}%` }]} />
+        {/* Follower goal card */}
+        {(() => {
+          const mainGoal = session.worldState.mainGoal || ''
+          const goalMatch = mainGoal.match(/Reach (\d+(?:\.\d+)?[KM]?) followers/)
+          const goalLabel = goalMatch ? goalMatch[1] : null
+          const goalTargets: Record<string, number> = { '10K': 10000, '100K': 100000, '1M': 1000000, '10M': 10000000, '100M': 100000000 }
+          const goalTarget = goalLabel ? (goalTargets[goalLabel] || 1000000) : 1000000
+          const followerPct = Math.min(100, (gs.followerCount / goalTarget) * 100)
+          const formatNum = (n: number) => n >= 1000000 ? `${(n/1000000).toFixed(1)}M` : n >= 1000 ? `${(n/1000).toFixed(0)}K` : n.toString()
+          return (
+            <View style={styles.goalCard}>
+              <Text style={styles.goalTitle}>{mainGoal}</Text>
+              <View style={styles.goalProgressRow}>
+                <View style={styles.goalProgressBg}>
+                  <View style={[styles.goalProgressFill, { width: `${followerPct}%` }]} />
+                </View>
+                <Text style={styles.goalPercent}>{Math.floor(followerPct)}%</Text>
+              </View>
+              <Text style={styles.goalDesc}>
+                {formatNum(gs.followerCount)} / {formatNum(goalTarget)} followers
+              </Text>
+              <TouchableOpacity style={styles.customizeBtn} onPress={() => router.push('/customize-world')}>
+                <Text style={styles.customizeBtnText}>⚙️ Customize world</Text>
+              </TouchableOpacity>
             </View>
-            <Text style={styles.goalPercent}>{gs.mainGoalProgress}%</Text>
-          </View>
-          <Text style={styles.goalDesc}>Keep playing to progress toward your main goal.</Text>
-          <TouchableOpacity
-            style={styles.customizeBtn}
-            onPress={() => router.push('/customize-world')}
-          >
-            <Text style={styles.customizeBtnText}>⚙️ Customize world</Text>
-          </TouchableOpacity>
-        </View>
+          )
+        })()}
 
         {/* Milestones track */}
         <View style={styles.section}>

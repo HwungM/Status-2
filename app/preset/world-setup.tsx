@@ -11,13 +11,22 @@ import { LocalWorldSessionService } from '@/services/worldSessionService'
 import { generateWorldInspiration } from '@/services/openaiService'
 import { useGameStore } from '@/store/gameStore'
 
+const FOLLOWER_GOALS = [
+  { label: '10K', sublabel: 'Micro-influencer', count: 10000, emoji: '🌱' },
+  { label: '100K', sublabel: 'Influencer', count: 100000, emoji: '⚡' },
+  { label: '1M', sublabel: 'Famous', count: 1000000, emoji: '🔥' },
+  { label: '10M', sublabel: 'Celebrity', count: 10000000, emoji: '💎' },
+  { label: '100M', sublabel: 'Legend', count: 100000000, emoji: '👑' },
+]
+
 export default function WorldSetupScreen() {
   const {
     selectedCharacters, playerCharacterId, firstFollowerCharacterId,
-    firstFollowerChemistry, mainGoal, worldSetting, difficulty, madnessScale,
+    firstFollowerChemistry, worldSetting, difficulty, madnessScale,
     setMainGoal, setWorldSetting, setDifficulty, setMadnessScale,
     selectedFandom,
   } = useScenarioStore()
+  const [selectedGoalCount, setSelectedGoalCount] = useState(1000000)
 
   const { loadSession } = useGameStore()
   const [loading, setLoading] = useState(false)
@@ -43,6 +52,9 @@ export default function WorldSetupScreen() {
       Alert.alert('Missing info', 'Please complete all previous steps')
       return
     }
+    const goal = FOLLOWER_GOALS.find(g => g.count === selectedGoalCount) || FOLLOWER_GOALS[2]
+    const goalText = `Reach ${goal.label} followers and become a certified ${goal.sublabel.toLowerCase()}`
+    setMainGoal(goalText)
     setLoading(true)
     try {
       const session = await LocalWorldSessionService.createSession({
@@ -51,8 +63,8 @@ export default function WorldSetupScreen() {
         playerCharacterId,
         firstFollowerCharacterId: firstFollowerCharacterId || selectedCharacters.find(c => c.id !== playerCharacterId)?.id || '',
         firstFollowerChemistry,
-        mainGoal: mainGoal || 'Become the most iconic person in this world',
-        worldSetting: worldSetting || `A dramatic world where social media clout is the ultimate currency. ${selectedCharacters.slice(0, 3).map(c => c.name).join(', ')} are all players in a game where every post counts.`,
+        mainGoal: goalText,
+        worldSetting: worldSetting || `The celebrity social media world where clout is currency. ${selectedCharacters.slice(0, 3).map(c => c.name).join(', ')} and others dominate the timeline. You're starting from nothing.`,
         fandom: selectedFandom,
         difficulty,
         madnessScale,
@@ -106,17 +118,24 @@ export default function WorldSetupScreen() {
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Main goal */}
+        {/* Follower goal */}
         <View style={styles.section}>
-          <Text style={styles.label}>Your main character goal</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. Become the most iconic person in your world"
-            placeholderTextColor="#9CA3AF"
-            value={mainGoal}
-            onChangeText={setMainGoal}
-            multiline
-          />
+          <Text style={styles.label}>Your follower goal</Text>
+          <Text style={styles.sublabel}>What are you trying to reach?</Text>
+          <View style={styles.goalGrid}>
+            {FOLLOWER_GOALS.map(g => (
+              <TouchableOpacity
+                key={g.count}
+                style={[styles.goalCard, selectedGoalCount === g.count && styles.goalCardActive]}
+                onPress={() => setSelectedGoalCount(g.count)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.goalEmoji}>{g.emoji}</Text>
+                <Text style={styles.goalLabel}>{g.label}</Text>
+                <Text style={styles.goalSublabel}>{g.sublabel}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
         {/* World setting */}
@@ -246,6 +265,13 @@ const styles = StyleSheet.create({
   section: { paddingHorizontal: 20, marginBottom: 24 },
   labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   label: { color: '#fff', fontSize: 15, fontWeight: '600', marginBottom: 8 },
+  sublabel: { color: '#9CA3AF', fontSize: 13, marginBottom: 12, marginTop: -4 },
+  goalGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  goalCard: { width: '29%', backgroundColor: '#1A1A1A', borderRadius: 14, padding: 14, alignItems: 'center', borderWidth: 1.5, borderColor: '#2A2A2A' },
+  goalCardActive: { borderColor: '#3B82F6', backgroundColor: 'rgba(59,130,246,0.1)' },
+  goalEmoji: { fontSize: 22, marginBottom: 4 },
+  goalLabel: { color: '#fff', fontSize: 16, fontWeight: '800', marginBottom: 2 },
+  goalSublabel: { color: '#9CA3AF', fontSize: 11, textAlign: 'center' },
   input: { backgroundColor: '#1A1A1A', borderRadius: 12, padding: 14, color: '#fff', fontSize: 15, borderWidth: 1, borderColor: '#2A2A2A' },
   textArea: { minHeight: 100, textAlignVertical: 'top' },
   charCount: { color: '#9CA3AF', fontSize: 12, marginTop: 4, textAlign: 'right' },
