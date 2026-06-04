@@ -43,7 +43,7 @@ export default function GameLayout() {
         }}
       />
       <Tabs.Screen
-        name="messages"
+        name="messages/index"
         options={{
           tabBarIcon: ({ focused }) => <TabIcon label="Messages" emoji="💬" focused={focused} />,
         }}

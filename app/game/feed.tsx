@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  TextInput, Modal, ActivityIndicator, ScrollView,
+  TextInput, Modal, ActivityIndicator, ScrollView, RefreshControl,
 } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -70,6 +70,7 @@ export default function FeedScreen() {
   const [responseText, setResponseText] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isAdvancingDay, setIsAdvancingDay] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [prevFollowerCount, setPrevFollowerCount] = useState<number | null>(null)
 
   // Activity state
@@ -88,6 +89,13 @@ export default function FeedScreen() {
       if (fc !== undefined) setPrevFollowerCount(fc)
     }
   }, [])
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true)
+    await loadInitialFeed()
+    await refreshSession()
+    setIsRefreshing(false)
+  }, [loadInitialFeed, refreshSession])
 
   const loadNextEvent = async () => {
     const event = await generateNewEvent()
@@ -298,6 +306,14 @@ export default function FeedScreen() {
           <PostCard post={item} character={getCharacter(item.authorCharacterId)} />
         )}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={COLORS.primary}
+            colors={[COLORS.primary]}
+          />
+        }
         ListEmptyComponent={
           <View style={styles.emptyFeed}>
             {isGenerating

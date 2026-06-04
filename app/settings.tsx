@@ -28,8 +28,12 @@ export default function SettingsScreen() {
   }, [])
 
   const handleSaveApiKey = async () => {
-    await saveApiKey(apiKey)
-    showToast('API key saved!', 'success')
+    if (!apiKey.trim()) {
+      Alert.alert('Missing Key', 'Please enter your Groq API key first.')
+      return
+    }
+    await saveApiKey(apiKey.trim())
+    Alert.alert('Saved', 'Your Groq API key has been saved. AI features are now active.')
   }
 
   const handleClearData = () => {
