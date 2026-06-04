@@ -292,6 +292,13 @@ export default function FeedScreen() {
         </View>
       </View>
 
+      {isSubmitting && (
+        <View style={styles.processingBanner}>
+          <ActivityIndicator size="small" color="#fff" style={{ marginRight: 8 }} />
+          <Text style={styles.processingText}>AI is processing your move...</Text>
+        </View>
+      )}
+
       {resultToast && (
         <ResultsToast
           visible={resultToast.visible}
@@ -638,6 +645,14 @@ const styles = StyleSheet.create({
   endDayBtnDisabled: { opacity: 0.5 },
   endDayText: { color: '#C4B5FD', fontSize: 12, fontWeight: '600' },
   headerIcon: { fontSize: 18, color: COLORS.textSecondary },
+  processingBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(59,130,246,0.9)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  processingText: { color: '#fff', fontSize: 13, fontWeight: '600' },
   emptyFeed: { paddingTop: 80, alignItems: 'center', gap: 12 },
   emptyText: { color: COLORS.textSecondary, textAlign: 'center', paddingHorizontal: 40 },
   fabBackdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },

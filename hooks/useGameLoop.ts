@@ -7,8 +7,8 @@ import { LocalWorldSessionService } from '@/services/worldSessionService'
 import { generateId } from '@/utils/generateId'
 import { Post, Notification, GameEvent } from '@/types'
 
-const NPC_POST_INTERVAL_MS = 45000  // 45 seconds
-const RANDOM_EVENT_INTERVAL_MS = 90000 // 90 seconds
+const NPC_POST_INTERVAL_MS = 25000  // 25 seconds
+const RANDOM_EVENT_INTERVAL_MS = 75000 // 75 seconds
 
 export function useGameLoop() {
   const { session, refreshSession } = useGameStore()
@@ -171,6 +171,9 @@ export function useGameLoop() {
 
     if (npcIntervalRef.current) clearInterval(npcIntervalRef.current)
     if (randomEventIntervalRef.current) clearInterval(randomEventIntervalRef.current)
+
+    // Fire immediately on mount so the feed starts populating right away
+    setTimeout(() => { if (appStateRef.current === 'active') triggerNPCAutonomousPost() }, 3000)
 
     npcIntervalRef.current = setInterval(() => {
       if (appStateRef.current === 'active') triggerNPCAutonomousPost()

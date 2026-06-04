@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   TextInput, Modal, ActivityIndicator, KeyboardAvoidingView, Platform,
@@ -81,7 +81,7 @@ export default function PostDetailScreen() {
   }
 
   const replies = post.replies || []
-  const views = Math.floor(post.likes * (2 + Math.random() * 8))
+  const views = useMemo(() => Math.floor(post.likes * (2 + Math.random() * 8)), [post.id])
 
   return (
     <SafeAreaView style={styles.safe}>

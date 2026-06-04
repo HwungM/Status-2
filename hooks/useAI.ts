@@ -404,22 +404,6 @@ export function useAI() {
         await dispatch({ type: 'TENSION_CHANGED', payload: { delta: result.tensionDelta, newTension: Math.min(100, Math.max(0, ctx.storyArc.currentTension + result.tensionDelta)) } })
       }
 
-      // Create activity post from player
-      const activityPost: Post = {
-        id: generateId(),
-        sessionId: session.id,
-        authorCharacterId: ctx.playerCharacter.id,
-        authorUserId: ctx.playerSlot.userId,
-        content: `[Activity: ${activityType}] ${result.narrativeResult}`,
-        likes: Math.floor(Math.random() * 5000) + 500,
-        reposts: Math.floor(Math.random() * 500) + 50,
-        replies: [],
-        isPlayerPost: true,
-        resolvedEventId: null,
-        createdAt: Date.now(),
-      }
-      await LocalWorldSessionService.addPost(session.id, activityPost)
-
       // NPC reaction posts
       for (const fp of result.feedPosts) {
         const post: Post = {

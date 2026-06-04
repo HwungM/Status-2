@@ -410,7 +410,7 @@ export async function generateFeedPosts(
 
   const worldDetail = `Setting: ${worldState.worldSetting}. Fandom: ${worldState.fandom || 'original'}. Day ${worldState.dayNumber}.`
 
-  const prompt = `Generate 7-10 NPC social media posts for this world's timeline.
+  const prompt = `Generate 15-20 NPC social media posts for this world's timeline.
 
 ${worldDetail}
 Available characters: ${npcList}
@@ -654,7 +654,7 @@ export async function generateNPCAutonomousPost(
 
   const npcIds = allCharacters.filter(c => c.id !== playerCharacter.id).map(c => `id="${c.id}" @${c.handle}`).join(', ')
 
-  const prompt = `Generate 1-2 organic NPC social media posts that happen without the player's involvement.
+  const prompt = `Generate 3-5 organic NPC social media posts that happen without the player's involvement.
 
 CRITICAL — 60% of posts should involve NPC-to-NPC interaction (not about the player). Use these interaction types:
 - Two NPCs arguing in replies: one NPC starts a post, another NPC quote-tweets or fires back directly (use @handle in content)
@@ -678,7 +678,7 @@ Respond in JSON:
   ]
 }
 
-Generate 1-2 posts. mentionsPlayer should be true only if the post explicitly tags or mentions ${playerCharacter.name} (@${playerCharacter.handle}).`
+Generate 3-5 posts. mentionsPlayer should be true only if the post explicitly tags or mentions ${playerCharacter.name} (@${playerCharacter.handle}).`
 
   const raw = await callOpenAI([
     { role: 'system', content: system },
