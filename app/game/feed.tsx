@@ -72,6 +72,8 @@ export default function FeedScreen() {
   const [isAdvancingDay, setIsAdvancingDay] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [prevFollowerCount, setPrevFollowerCount] = useState<number | null>(null)
+  const [replyModalPost, setReplyModalPost] = useState<Post | null>(null)
+  const [replyText, setReplyText] = useState('')
 
   // Activity state
   const [selectedActivityType, setSelectedActivityType] = useState('')
@@ -96,6 +98,38 @@ export default function FeedScreen() {
     await refreshSession()
     setIsRefreshing(false)
   }, [loadInitialFeed, refreshSession])
+
+  const handleSubmitReply = async () => {
+    if (!replyText.trim() || !replyModalPost || !session || !playerSlot || !playerChar) return
+    const trimmed = replyText.trim()
+    setReplyText('')
+    setReplyModalPost(null)
+    const replyPost: Post = {
+      id: generateId(),
+      sessionId: session.id,
+      authorCharacterId: playerChar.id,
+      authorUserId: playerSlot.userId,
+      content: `@${session.worldState.characters.find(c => c.id === replyModalPost.authorCharacterId)?.handle || 'them'} ${trimmed}`,
+      likes: 0,
+      reposts: 0,
+      replies: [],
+      isPlayerPost: true,
+      resolvedEventId: null,
+      createdAt: Date.now(),
+    }
+    await LocalWorldSessionService.addPost(session.id, replyPost)
+    const result = await handlePlayerAction(`Replied to a post: "${trimmed}"`)
+    if (result) {
+      showResultToast({
+        visible: true,
+        xpGained: result.xpGained,
+        followersGained: result.followersGained,
+        narrativeResult: result.narrativeResult,
+        statChanges: result.statChanges,
+      })
+    }
+    await refreshSession()
+  }
 
   const loadNextEvent = async () => {
     const event = await generateNewEvent()
@@ -303,7 +337,7 @@ export default function FeedScreen() {
         data={session.sharedFeed}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
-          <PostCard post={item} character={getCharacter(item.authorCharacterId)} />
+          <PostCard post={item} character={getCharacter(item.authorCharacterId)} onReply={setReplyModalPost} />
         )}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -557,6 +591,46 @@ export default function FeedScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Reply Modal */}
+      <Modal visible={!!replyModalPost} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setReplyModalPost(null)}>
+        <View style={styles.replyModal}>
+          <View style={styles.replyModalHeader}>
+            <TouchableOpacity onPress={() => setReplyModalPost(null)}>
+              <Text style={styles.modalCancel}>Cancel</Text>
+            </TouchableOpacity>
+            <Text style={styles.replyModalTitle}>Reply</Text>
+            <TouchableOpacity
+              style={[styles.replyPostBtn, !replyText.trim() && styles.replyPostBtnDisabled]}
+              onPress={handleSubmitReply}
+              disabled={!replyText.trim()}
+            >
+              <Text style={styles.replyPostBtnText}>Post</Text>
+            </TouchableOpacity>
+          </View>
+          {replyModalPost && (
+            <View style={styles.replyOriginalPost}>
+              <Text style={styles.replyOriginalAuthor}>
+                {getCharacter(replyModalPost.authorCharacterId)?.name || 'Unknown'}
+              </Text>
+              <Text style={styles.replyOriginalContent} numberOfLines={3}>{replyModalPost.content}</Text>
+            </View>
+          )}
+          <View style={styles.replyComposer}>
+            <Avatar uri={playerChar?.avatar} size={36} />
+            <TextInput
+              style={styles.replyInput}
+              value={replyText}
+              onChangeText={setReplyText}
+              placeholder="Post your reply..."
+              placeholderTextColor={COLORS.textSecondary}
+              multiline
+              autoFocus
+              maxLength={280}
+            />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   )
 }
@@ -774,4 +848,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 36,
   },
   dayCardButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  replyModal: { flex: 1, backgroundColor: COLORS.background, padding: 16 },
+  replyModalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
+  replyModalTitle: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  replyOriginalPost: { borderLeftWidth: 2, borderLeftColor: COLORS.divider, paddingLeft: 12, marginBottom: 16 },
+  replyOriginalAuthor: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 },
+  replyOriginalContent: { color: COLORS.textSecondary, fontSize: 14, lineHeight: 20 },
+  replyComposer: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
+  replyInput: { flex: 1, color: '#fff', fontSize: 16, lineHeight: 24, minHeight: 80 },
+  replyPostBtn: { backgroundColor: COLORS.primary, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 18 },
+  replyPostBtnDisabled: { opacity: 0.4 },
+  replyPostBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 })
