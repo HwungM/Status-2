@@ -1,24 +1,25 @@
 const path = require('path')
-const fs = require('fs')
+const Module = require('module')
 
-// Create react-native-worklets stub before any babel preset can require it.
-// babel-preset-expo with expo-router pulls in reanimated which requires this.
-const stubDir = path.join(__dirname, 'node_modules', 'react-native-worklets')
-if (!fs.existsSync(path.join(stubDir, 'plugin.js'))) {
-  fs.mkdirSync(stubDir, { recursive: true })
-  fs.writeFileSync(path.join(stubDir, 'package.json'), JSON.stringify({ name: 'react-native-worklets', version: '0.0.1', main: 'index.js' }))
-  fs.writeFileSync(path.join(stubDir, 'index.js'), 'module.exports = {};\n')
-  fs.writeFileSync(path.join(stubDir, 'plugin.js'), 'module.exports = function () { return { visitor: {} }; };\n')
+// Redirect react-native-worklets to our local stub at the Node resolver level.
+// This runs in the Metro transform worker before any preset can fail on it.
+const stubDir = path.resolve(__dirname, 'stubs', 'react-native-worklets')
+const _orig = Module._resolveFilename.bind(Module)
+Module._resolveFilename = function (request, parent, isMain, options) {
+  if (request === 'react-native-worklets') return path.join(stubDir, 'index.js')
+  if (request === 'react-native-worklets/plugin') return path.join(stubDir, 'plugin.js')
+  return _orig(request, parent, isMain, options)
 }
 
 module.exports = function (api) {
-  api.cache(true);
+  api.cache(true)
   return {
     presets: [
       ['babel-preset-expo', { jsxImportSource: 'nativewind', reanimated: false }],
       'nativewind/babel',
     ],
     plugins: [],
-  };
-};
+  }
+}
+
 
