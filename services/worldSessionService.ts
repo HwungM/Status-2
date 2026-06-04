@@ -37,6 +37,7 @@ export interface IWorldSessionService {
   updatePlayerState(sessionId: string, userId: string, patch: Partial<PlayerGameState>): Promise<void>
   dispatchAction(sessionId: string, action: GameAction): Promise<void>
   addNotification(sessionId: string, notification: Notification): Promise<void>
+  updatePostReplies(sessionId: string, postId: string, replies: import('@/types').Reply[]): Promise<void>
   deleteSession(sessionId: string): Promise<void>
   clearAllData(): Promise<void>
 }
@@ -338,6 +339,15 @@ export const LocalWorldSessionService: IWorldSessionService = {
     const sessions = await loadAll()
     if (!sessions[sessionId]) return
     sessions[sessionId].sharedNotifications.unshift(notification)
+    sessions[sessionId].updatedAt = Date.now()
+    await saveAll(sessions)
+  },
+
+  async updatePostReplies(sessionId, postId, replies) {
+    const sessions = await loadAll()
+    if (!sessions[sessionId]) return
+    const post = sessions[sessionId].sharedFeed.find(p => p.id === postId)
+    if (post) post.replies = replies
     sessions[sessionId].updatedAt = Date.now()
     await saveAll(sessions)
   },

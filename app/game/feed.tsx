@@ -337,7 +337,7 @@ export default function FeedScreen() {
         data={session.sharedFeed}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
-          <PostCard post={item} character={getCharacter(item.authorCharacterId)} onReply={setReplyModalPost} />
+          <PostCard post={item} character={getCharacter(item.authorCharacterId)} allCharacters={allChars} onReply={setReplyModalPost} />
         )}
         showsVerticalScrollIndicator={false}
         refreshControl={

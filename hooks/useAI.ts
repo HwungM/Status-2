@@ -10,7 +10,7 @@ import {
 } from '@/services/openaiService'
 import { LocalWorldSessionService } from '@/services/worldSessionService'
 import { generateId } from '@/utils/generateId'
-import { Post, GameEvent, Notification, LegendProgress, ScandalState } from '@/types'
+import { Post, Reply, GameEvent, Notification, LegendProgress, ScandalState } from '@/types'
 
 export function useAI() {
   const { session, dispatch, refreshSession } = useGameStore()
@@ -73,6 +73,23 @@ export function useAI() {
         await dispatch({ type: 'TENSION_CHANGED', payload: { delta: result.tensionDelta, newTension: Math.min(100, Math.max(0, ctx.storyArc.currentTension + result.tensionDelta)) } })
       }
 
+      // Attach postReplies to the player's most recent post
+      if (result.postReplies && result.postReplies.length > 0) {
+        const freshSession = await LocalWorldSessionService.getSession(session.id)
+        const playerPost = freshSession?.sharedFeed.find(p => p.isPlayerPost)
+        if (playerPost) {
+          const newReplies: Reply[] = result.postReplies.map(r => ({
+            id: generateId(),
+            postId: playerPost.id,
+            authorCharacterId: r.characterId,
+            content: r.content,
+            likes: r.likes,
+            createdAt: Date.now(),
+          }))
+          await LocalWorldSessionService.updatePostReplies(session.id, playerPost.id, [...playerPost.replies, ...newReplies])
+        }
+      }
+
       // Add NPC posts
       for (const npcPost of result.newNpcPosts) {
         const post: Post = {
@@ -97,7 +114,21 @@ export function useAI() {
       }
 
       // Add notifications
-      if (result.newNpcPosts.length > 0) {
+      if (result.postReplies && result.postReplies.length > 0) {
+        const firstReply = result.postReplies[0]
+        const replyChar = ctx.worldState.characters.find(c => c.id === firstReply.characterId)
+        const notification: Notification = {
+          id: generateId(),
+          sessionId: session.id,
+          type: 'reaction',
+          sourceCharacterId: firstReply.characterId,
+          title: `replied to your post`,
+          preview: firstReply.content.slice(0, 100),
+          createdAt: Date.now(),
+          isRead: false,
+        }
+        await LocalWorldSessionService.addNotification(session.id, notification)
+      } else if (result.newNpcPosts.length > 0) {
         const firstNpc = result.newNpcPosts[0]
         const notification: Notification = {
           id: generateId(),
@@ -237,6 +268,14 @@ export function useAI() {
         ctx.playerCharacter, ctx.worldState.characters,
       )
       for (const p of posts) {
+        const postReplies: Reply[] = (p.replies || []).map((r: { characterId: string; content: string; likes: number }) => ({
+          id: generateId(),
+          postId: '',
+          authorCharacterId: r.characterId,
+          content: r.content,
+          likes: r.likes,
+          createdAt: Date.now() - Math.floor(Math.random() * 1800000),
+        }))
         const post: Post = {
           id: generateId(),
           sessionId: session.id,
@@ -245,11 +284,12 @@ export function useAI() {
           content: p.content,
           likes: p.likes,
           reposts: p.reposts,
-          replies: [],
+          replies: postReplies,
           isPlayerPost: false,
           resolvedEventId: null,
           createdAt: Date.now() - Math.floor(Math.random() * 3600000),
         }
+        postReplies.forEach(r => { r.postId = post.id })
         await LocalWorldSessionService.addPost(session.id, post)
       }
       await refreshSession()
