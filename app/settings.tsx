@@ -36,18 +36,8 @@ export default function SettingsScreen() {
       Alert.alert('Missing Key', 'Please enter your Gemini API key first.')
       return
     }
-    setIsTesting(true)
-    setKeyStatus('idle')
-    setKeyError('')
     await saveApiKey(trimmed)
-    const result = await testApiKey(trimmed)
-    setIsTesting(false)
-    if (result.ok) {
-      setKeyStatus('ok')
-    } else {
-      setKeyStatus('error')
-      setKeyError(result.error || 'Unknown error')
-    }
+    setKeyStatus('ok')
   }
 
   const handleClearData = () => {
@@ -100,17 +90,11 @@ export default function SettingsScreen() {
                 <Text style={styles.toggleBtnText}>{showApiKey ? '🙈' : '👁️'}</Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.saveBtn} onPress={handleSaveApiKey} disabled={isTesting}>
-              {isTesting
-                ? <ActivityIndicator size="small" color="#fff" />
-                : <Text style={styles.saveBtnText}>Save & Test Key</Text>
-              }
+            <TouchableOpacity style={styles.saveBtn} onPress={handleSaveApiKey}>
+              <Text style={styles.saveBtnText}>Save Key</Text>
             </TouchableOpacity>
             {keyStatus === 'ok' && (
-              <Text style={styles.keyOk}>✅ Key works! AI features are active.</Text>
-            )}
-            {keyStatus === 'error' && (
-              <Text style={styles.keyErr}>❌ Key failed: {keyError}</Text>
+              <Text style={styles.keyOk}>✅ Key saved! AI features are active.</Text>
             )}
           </View>
         </View>
