@@ -270,6 +270,7 @@ export interface ActionResult {
   relationshipChanges: { characterId: string; delta: number; flavorText: string }[]
   narrativeResult: string
   newNpcPosts: { characterId: string; content: string; likes: number; reposts: number }[]
+  postReplies: { characterId: string; content: string; likes: number }[]
   tensionDelta: number
   newConsequences: { type: string; description: string; triggerInNActions: number }[]
   triggerPlannedEvent: boolean
@@ -292,35 +293,68 @@ export async function resolvePlayerAction(
 ): Promise<ActionResult> {
   const system = buildMasterSystemPrompt(worldState, storyArc, playerState, playerCharacter, allCharacters, recentFeed)
 
-  const prompt = `Player just did: "${playerAction}"
+  const npcList = allCharacters.filter(c => c.id !== playerCharacter.id)
+    .map(c => `id="${c.id}" @${c.handle}`)
+    .join(', ')
 
-Respond in JSON:
+  const relContext = Object.entries(playerState.relationships)
+    .map(([id, rel]) => {
+      const c = allCharacters.find(x => x.id === id)
+      return c ? `${c.name} (chemistry: ${rel.chemistry}, value: ${rel.value}/100)` : null
+    })
+    .filter(Boolean).join(', ')
+
+  const prompt = `Player action: "${playerAction}"
+
+Current relationships: ${relContext || 'none yet'}
+Available NPC ids: ${npcList}
+
+You are a NEUTRAL, realistic narrator. Outcomes must be EARNED, not given.
+
+OUTCOME RULES:
+- Safe, generic posts: small gains (+50 to +200 followers, +1-3 aura)
+- Strong, on-brand posts: medium gains (+200 to +800, +3-8 aura)
+- Controversial/risky: could go either way — big gain OR big loss, negative relationship changes
+- Cringe/off-brand: lose followers (-100 to -500), lose aura (-2 to -8), NPCs mock or ignore
+- Posts directed at specific characters: MUST affect that character's relationship (positive or negative depending on chemistry)
+- Rivals/enemies chemistry: their relationship should go DOWN when player does well (jealousy), they post shade
+- Friends/lovers: defend and hype the player, relationship goes UP
+- Strangers: don't react unless the post is directly about them
+
+POST REPLIES (2-5 replies directly on the player's post from NPCs, like Twitter replies):
+- Mix of supportive, neutral, and negative replies based on the NPCs' chemistry with player
+- Rivals post shade, sarcasm, or just ignore
+- Friends hype, defend, join in
+- Enemies drag, ratio, callout
+- Strangers curious or indifferent
+
+Respond ONLY in JSON:
 {
-  "xpGained": 20,
-  "followersGained": 150,
-  "statChanges": [{ "stat": "aura", "delta": 2.5, "flavorText": "Your aura grew stronger" }],
-  "relationshipChanges": [{ "characterId": "character_id", "delta": 10, "flavorText": "They noticed you" }],
-  "narrativeResult": "1-2 sentence description of what happened",
-  "newNpcPosts": [
-    { "characterId": "character_id", "content": "post content", "likes": 1240, "reposts": 89 }
+  "xpGained": 15,
+  "followersGained": 200,
+  "statChanges": [{ "stat": "aura", "delta": 3, "flavorText": "brief why" }],
+  "relationshipChanges": [{ "characterId": "exact_id_from_list", "delta": -8, "flavorText": "brief why" }],
+  "narrativeResult": "1 sentence of what just happened in the world",
+  "postReplies": [
+    { "characterId": "exact_id", "content": "reply text under 100 chars", "likes": 340 }
   ],
-  "tensionDelta": 5,
+  "newNpcPosts": [
+    { "characterId": "exact_id", "content": "standalone post reacting to the moment", "likes": 1200, "reposts": 45 }
+  ],
+  "tensionDelta": 3,
   "newConsequences": [],
   "triggerPlannedEvent": false,
   "scandalTriggered": null
-}
-
-Generate 3-5 NPC reaction posts. followersGained can be negative. Make consequences from controversial actions.
-If the player does something risky, controversial, or when drama scale warrants it, set scandalTriggered to:
-{ "severity": "minor|major|career-ending", "cause": "brief explanation", "followerLossPerTick": 500, "ticksRemaining": 3 }
-Otherwise keep scandalTriggered as null.`
+}`
 
   const raw = await callOpenAI([
     { role: 'system', content: system },
     { role: 'user', content: prompt },
   ])
 
-  return JSON.parse(raw) as ActionResult
+  const parsed = JSON.parse(raw) as ActionResult
+  if (!parsed.postReplies) parsed.postReplies = []
+  return parsed
 }
 
 export async function generateFeedPosts(
@@ -329,19 +363,40 @@ export async function generateFeedPosts(
   playerState: PlayerGameState,
   playerCharacter: Character,
   allCharacters: Character[],
-): Promise<{ characterId: string; content: string; likes: number; reposts: number }[]> {
+): Promise<{ characterId: string; content: string; likes: number; reposts: number; replies: { characterId: string; content: string; likes: number }[] }[]> {
   const system = buildMasterSystemPrompt(worldState, storyArc, playerState, playerCharacter, allCharacters, [])
 
-  const prompt = `Generate 5-8 NPC social media posts for the current feed state.
+  const npcList = allCharacters.filter(c => c.id !== playerCharacter.id)
+    .map(c => `id="${c.id}" @${c.handle}`)
+    .join(', ')
 
-Respond in JSON:
+  const prompt = `Generate 6-10 NPC social media posts. Make this feel like a REAL social media timeline — an entire ecosystem of conversations happening without the player.
+
+Available characters: ${npcList}
+
+REQUIREMENTS:
+- Each post must have 1-6 replies from OTHER characters (not the post author)
+- Some posts are just about their own lives (opinions, jokes, flex, rant, selfie caption)
+- Some posts are conversations between NPCs that have nothing to do with the player
+- Only 1-2 posts max should mention the player (@${playerCharacter.handle})
+- Vary tone: funny, dramatic, thirsty, annoyed, hype, cryptic vague posts
+- Likes/reposts should vary WILDLY: some posts flop (12 likes), some go viral (45K likes)
+- Replies should have their own likes and feel like a real comment section
+
+Respond ONLY in JSON:
 {
   "posts": [
-    { "characterId": "character_id", "content": "post content", "likes": 5420, "reposts": 234 }
+    {
+      "characterId": "exact_id",
+      "content": "post text",
+      "likes": 3200,
+      "reposts": 120,
+      "replies": [
+        { "characterId": "exact_id", "content": "reply text", "likes": 89 }
+      ]
+    }
   ]
-}
-
-Posts should reflect current world tension (${storyArc.currentTension}/100) and cast dynamics. Write like real social media.`
+}`
 
   const raw = await callOpenAI([
     { role: 'system', content: system },
@@ -349,7 +404,7 @@ Posts should reflect current world tension (${storyArc.currentTension}/100) and 
   ])
 
   const parsed = JSON.parse(raw)
-  return parsed.posts || []
+  return (parsed.posts || []).map((p: any) => ({ ...p, replies: p.replies || [] }))
 }
 
 export async function generateDMResponse(
