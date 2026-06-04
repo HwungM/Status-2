@@ -370,6 +370,108 @@ Respond in JSON: { "options": ["paragraph 1", "paragraph 2", "paragraph 3"] }`
   return parsed.options || []
 }
 
+export interface ActivityResult {
+  narrativeResult: string
+  xpGained: number
+  followersGained: number
+  statChanges: { stat: string; delta: number; flavorText: string }[]
+  relationshipChanges: { characterId: string; delta: number; flavorText: string }[]
+  feedPosts: { characterId: string; content: string; likes: number; reposts: number }[]
+  tensionDelta: number
+  worldReaction: string
+}
+
+export async function generateActivity(
+  activityType: string,
+  activityDesc: string,
+  involvedCharacters: Character[],
+  worldState: WorldState,
+  storyArc: StoryArc,
+  playerState: PlayerGameState,
+  playerCharacter: Character,
+  allCharacters: Character[],
+): Promise<ActivityResult> {
+  const system = buildMasterSystemPrompt(worldState, storyArc, playerState, playerCharacter, allCharacters, [])
+  const charList = involvedCharacters.map(c => `${c.name} (@${c.handle}) [chemistry: ${playerState.relationships[c.id]?.chemistry || 'strangers'}]`).join(', ')
+
+  const prompt = `Player did an activity: "${activityType}"
+Characters involved: ${charList}
+Player's description: "${activityDesc || 'No description provided'}"
+
+Generate the full outcome. Make it dramatic, specific to these characters' chemistry with the player, and true to the world. Let the madness scale (${worldState.madnessScale}/100) shape how wild it gets.
+
+Respond in JSON:
+{
+  "narrativeResult": "2-3 vivid sentences describing exactly what happened, who said what, how it went",
+  "xpGained": 30,
+  "followersGained": 800,
+  "statChanges": [{ "stat": "aura", "delta": 5, "flavorText": "Your presence grew" }],
+  "relationshipChanges": [{ "characterId": "exact_character_id", "delta": 15, "flavorText": "You two bonded over this" }],
+  "feedPosts": [
+    { "characterId": "exact_character_id", "content": "What this character posts about the activity", "likes": 5400, "reposts": 234 }
+  ],
+  "tensionDelta": 5,
+  "worldReaction": "One sentence about how the broader public/fandom reacted to this activity"
+}
+
+Generate 2-4 feedPosts. followersGained and stat deltas can be negative if things went badly. The chemistry type between player and each character MUST shape the outcome — rivals will have tension, spicy will have heat, lovers will be soft, enemies will turn this into drama.`
+
+  const raw = await callOpenAI([
+    { role: 'system', content: system },
+    { role: 'user', content: prompt },
+  ])
+  return JSON.parse(raw) as ActivityResult
+}
+
+export interface DayAdvanceResult {
+  daySummary: string
+  npcPosts: { characterId: string; content: string; likes: number; reposts: number }[]
+  randomEvent: {
+    title: string
+    description: string
+    xpMin: number
+    xpMax: number
+    suggestions: string[]
+  } | null
+}
+
+export async function generateDayAdvance(
+  worldState: WorldState,
+  storyArc: StoryArc,
+  playerState: PlayerGameState,
+  playerCharacter: Character,
+  allCharacters: Character[],
+  recentFeed: Post[],
+): Promise<DayAdvanceResult> {
+  const system = buildMasterSystemPrompt(worldState, storyArc, playerState, playerCharacter, allCharacters, recentFeed)
+  const includeEvent = Math.random() < (0.3 + storyArc.currentTension / 200)
+
+  const prompt = `It's now Day ${worldState.dayNumber + 1}. Time has passed. Generate what happened overnight and what the world is posting about now.
+
+Respond in JSON:
+{
+  "daySummary": "1-2 sentences capturing the vibe/energy of the new day",
+  "npcPosts": [
+    { "characterId": "exact_character_id", "content": "post content", "likes": 1200, "reposts": 89 }
+  ],
+  "randomEvent": ${includeEvent ? `{
+    "title": "short event title",
+    "description": "2-3 sentence situation the player now faces — make it specific to current story tension",
+    "xpMin": 15,
+    "xpMax": 45,
+    "suggestions": ["option 1", "option 2", "option 3"]
+  }` : 'null'}
+}
+
+Generate 4-7 NPC posts reflecting the current story arc and what happened in previous days. Make posts feel like a real social media morning — different tones, some catching up on drama, some starting new threads.`
+
+  const raw = await callOpenAI([
+    { role: 'system', content: system },
+    { role: 'user', content: prompt },
+  ])
+  return JSON.parse(raw) as DayAdvanceResult
+}
+
 export async function generateSideQuests(
   worldState: WorldState,
   storyArc: StoryArc,
