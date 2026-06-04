@@ -18,10 +18,10 @@ export default function SettingsScreen() {
   const [showApiKey, setShowApiKey] = useState(false)
 
   useEffect(() => {
-    AsyncStorage.multiGet(['clout:openai_key', 'clout:supabase_url', 'clout:supabase_key'])
+    AsyncStorage.multiGet(['clout:groq_key', 'clout:supabase_url', 'clout:supabase_key'])
       .then(pairs => {
         const map = Object.fromEntries(pairs.map(([k, v]) => [k, v || '']))
-        setApiKey(map['clout:openai_key'])
+        setApiKey(map['clout:groq_key'])
         setSupabaseUrl(map['clout:supabase_url'])
         setSupabaseKey(map['clout:supabase_key'])
       })
@@ -65,14 +65,14 @@ export default function SettingsScreen() {
         <View style={styles.group}>
           <Text style={styles.groupTitle}>AI Configuration</Text>
           <View style={styles.inputRow}>
-            <Text style={styles.inputLabel}>OpenAI API Key</Text>
-            <Text style={styles.inputHint}>Only sent to OpenAI. Never stored externally.</Text>
+            <Text style={styles.inputLabel}>Groq API Key</Text>
+            <Text style={styles.inputHint}>Powers all AI storytelling. Only sent to Groq. Never stored externally.</Text>
             <View style={styles.inputWithToggle}>
               <TextInput
                 style={styles.input}
                 value={apiKey}
                 onChangeText={setApiKey}
-                placeholder="sk-..."
+                placeholder="gsk_..."
                 placeholderTextColor="#9CA3AF"
                 secureTextEntry={!showApiKey}
                 autoCapitalize="none"
