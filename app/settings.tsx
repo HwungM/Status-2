@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, Alert } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, Alert, ActivityIndicator } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { COLORS } from '@/constants/colors'
-import { saveApiKey } from '@/services/openaiService'
+import { saveApiKey, testApiKey } from '@/services/openaiService'
 import { LocalWorldSessionService } from '@/services/worldSessionService'
 import { useGameStore } from '@/store/gameStore'
 import { useUIStore } from '@/store/uiStore'
@@ -16,6 +16,9 @@ export default function SettingsScreen() {
   const [supabaseUrl, setSupabaseUrl] = useState('')
   const [supabaseKey, setSupabaseKey] = useState('')
   const [showApiKey, setShowApiKey] = useState(false)
+  const [isTesting, setIsTesting] = useState(false)
+  const [keyStatus, setKeyStatus] = useState<'idle' | 'ok' | 'error'>('idle')
+  const [keyError, setKeyError] = useState('')
 
   useEffect(() => {
     AsyncStorage.multiGet(['clout:groq_key', 'clout:supabase_url', 'clout:supabase_key'])
@@ -28,12 +31,23 @@ export default function SettingsScreen() {
   }, [])
 
   const handleSaveApiKey = async () => {
-    if (!apiKey.trim()) {
+    const trimmed = apiKey.trim()
+    if (!trimmed) {
       Alert.alert('Missing Key', 'Please enter your Groq API key first.')
       return
     }
-    await saveApiKey(apiKey.trim())
-    Alert.alert('Saved', 'Your Groq API key has been saved. AI features are now active.')
+    setIsTesting(true)
+    setKeyStatus('idle')
+    setKeyError('')
+    await saveApiKey(trimmed)
+    const result = await testApiKey(trimmed)
+    setIsTesting(false)
+    if (result.ok) {
+      setKeyStatus('ok')
+    } else {
+      setKeyStatus('error')
+      setKeyError(result.error || 'Unknown error')
+    }
   }
 
   const handleClearData = () => {
@@ -86,9 +100,18 @@ export default function SettingsScreen() {
                 <Text style={styles.toggleBtnText}>{showApiKey ? '🙈' : '👁️'}</Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.saveBtn} onPress={handleSaveApiKey}>
-              <Text style={styles.saveBtnText}>Save API Key</Text>
+            <TouchableOpacity style={styles.saveBtn} onPress={handleSaveApiKey} disabled={isTesting}>
+              {isTesting
+                ? <ActivityIndicator size="small" color="#fff" />
+                : <Text style={styles.saveBtnText}>Save & Test Key</Text>
+              }
             </TouchableOpacity>
+            {keyStatus === 'ok' && (
+              <Text style={styles.keyOk}>✅ Key works! AI features are active.</Text>
+            )}
+            {keyStatus === 'error' && (
+              <Text style={styles.keyErr}>❌ Key failed: {keyError}</Text>
+            )}
           </View>
         </View>
 
@@ -160,4 +183,6 @@ const styles = StyleSheet.create({
   dangerBtn: { backgroundColor: '#1A1A1A', borderRadius: 12, paddingVertical: 16, alignItems: 'center', borderWidth: 1.5, borderColor: '#EF4444' },
   dangerBtnText: { color: '#EF4444', fontSize: 15, fontWeight: '600' },
   versionText: { color: '#9CA3AF', fontSize: 13, textAlign: 'center', paddingVertical: 8 },
+  keyOk: { color: '#22C55E', fontSize: 13, marginTop: 8, textAlign: 'center' },
+  keyErr: { color: '#EF4444', fontSize: 13, marginTop: 8, textAlign: 'center', lineHeight: 18 },
 })
