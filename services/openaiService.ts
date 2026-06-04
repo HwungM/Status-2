@@ -2,9 +2,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { StoryArc, Character, PlayerGameState, WorldState, GameEvent, Post } from '@/types'
 import { generateId } from '@/utils/generateId'
 
-const API_KEY_STORAGE = 'clout:gemini_key'
-const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
-const GEMINI_MODEL = 'gemini-2.0-flash'
+const API_KEY_STORAGE = 'clout:openai_key'
+const OPENAI_BASE_URL = 'https://api.openai.com/v1/chat/completions'
+const OPENAI_MODEL = 'gpt-4o-mini'
 
 async function getApiKey(): Promise<string | null> {
   return AsyncStorage.getItem(API_KEY_STORAGE)
@@ -23,7 +23,7 @@ export async function testApiKey(key: string): Promise<{ ok: boolean; error?: st
         'Authorization': `Bearer ${key}`,
       },
       body: JSON.stringify({
-        model: GEMINI_MODEL,
+        model: OPENAI_MODEL,
         messages: [{ role: 'user', content: 'Reply with the single word: ok' }],
         max_tokens: 5,
       }),
@@ -39,17 +39,17 @@ export async function testApiKey(key: string): Promise<{ ok: boolean; error?: st
 
 async function callOpenAI(messages: { role: string; content: string }[], signal?: AbortSignal, plainText = false): Promise<string> {
   const apiKey = await getApiKey()
-  if (!apiKey) throw new Error('No Gemini API key configured. Go to Settings to add your key.')
+  if (!apiKey) throw new Error('No API key configured. Go to Settings to add your OpenAI key.')
 
   const body: any = {
-    model: GEMINI_MODEL,
+    model: OPENAI_MODEL,
     messages,
     temperature: 0.9,
     max_tokens: 4096,
   }
   if (!plainText) body.response_format = { type: 'json_object' }
 
-  const doFetch = () => fetch(GEMINI_BASE_URL, {
+  const doFetch = () => fetch(OPENAI_BASE_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
