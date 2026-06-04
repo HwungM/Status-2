@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { StoryArc, Character, PlayerGameState, WorldState, GameEvent, Post } from '@/types'
-import { v4 as uuidv4 } from 'uuid'
+import { generateId } from '@/utils/generateId'
 
 const API_KEY_STORAGE = 'clout:openai_key'
 
@@ -102,10 +102,25 @@ PLAYER: ${playerCharacter.name} (@${playerCharacter.handle})
 RECENT FEED (last 20):
 ${feedContext || 'Feed is empty — this is the beginning.'}
 
+CHEMISTRY TYPES (these MUST shape how characters interact):
+- rivals: public competition, callouts, subtweeting, shade, trying to one-up each other
+- spicy: flirtatious tension, thirst replies, ambiguous will-they-won't-they energy
+- lovers: soft, protective, private jokes, defending each other publicly
+- friends: supportive hype, tag-ins, banter, inside jokes
+- enemies: active hostility, blocking threats, exposing drama, direct conflict
+- strangers: distant/cold, no acknowledgment yet
+
+MADNESS SCALE BEHAVIOR:
+- 0-20 (Realistic): Grounded drama. Real-feeling social dynamics. Consequences feel earned.
+- 21-50 (Heightened): Exaggerated but believable. Drama escalates faster. Wilder coincidences.
+- 51-80 (Chaotic): Absurd twists. Characters do unhinged things. Plot armor activated.
+- 81-100 (Bonkers): Complete chaos. Anything goes. Reality-bending events. Maximum clout mayhem.
+
 Rules:
 - Stay in character always. Write like real social media — short, punchy, platform-native.
 - Match each character's voice to their bio exactly.
-- The madness scale determines how wild/absurd events can be (0=realistic, 100=unhinged).
+- ALWAYS reflect the chemistry type in how NPCs post about/to the player.
+- The madness scale (${worldState.madnessScale}/100) actively shapes event tone and NPC behavior.
 - Negative consequences (scandals, cancellation, follower loss) should happen organically.
 - Build toward narrative moments — you are telling a story, not just responding to inputs.
 - ALL responses must be valid JSON.`
@@ -171,7 +186,7 @@ Generate 8-12 plannedEvents. Generate cast dynamics for all notable character pa
     act1Summary: parsed.act1Summary,
     act2Summary: parsed.act2Summary,
     act3Summary: parsed.act3Summary,
-    plannedEvents: (parsed.plannedEvents || []).map((e: any) => ({ ...e, id: e.id || uuidv4() })),
+    plannedEvents: (parsed.plannedEvents || []).map((e: any) => ({ ...e, id: e.id || generateId() })),
     castDynamics: parsed.castDynamics || [],
     currentTension: parsed.startingTension || 20,
     pendingConsequences: [],
@@ -211,7 +226,7 @@ Respond in JSON:
   const parsed = JSON.parse(raw)
 
   return {
-    id: uuidv4(),
+    id: generateId(),
     sessionId: '',
     title: parsed.title,
     description: parsed.description,

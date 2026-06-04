@@ -7,7 +7,7 @@ import {
   generateSideQuests, ActionResult,
 } from '@/services/openaiService'
 import { LocalWorldSessionService } from '@/services/worldSessionService'
-import { v4 as uuidv4 } from 'uuid'
+import { generateId } from '@/utils/generateId'
 import { Post, GameEvent, Notification } from '@/types'
 
 export function useAI() {
@@ -74,7 +74,7 @@ export function useAI() {
       // Add NPC posts
       for (const npcPost of result.newNpcPosts) {
         const post: Post = {
-          id: uuidv4(),
+          id: generateId(),
           sessionId: session.id,
           authorCharacterId: npcPost.characterId,
           authorUserId: null,
@@ -98,7 +98,7 @@ export function useAI() {
       if (result.newNpcPosts.length > 0) {
         const firstNpc = result.newNpcPosts[0]
         const notification: Notification = {
-          id: uuidv4(),
+          id: generateId(),
           sessionId: session.id,
           type: 'reaction',
           sourceCharacterId: firstNpc.characterId,
@@ -140,7 +140,7 @@ export function useAI() {
       )
       for (const p of posts) {
         const post: Post = {
-          id: uuidv4(),
+          id: generateId(),
           sessionId: session.id,
           authorCharacterId: p.characterId,
           authorUserId: null,

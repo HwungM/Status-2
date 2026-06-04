@@ -6,7 +6,7 @@ import { COLORS } from '@/constants/colors'
 import { Avatar } from '@/components/common/Avatar'
 import { useScenarioStore } from '@/store/scenarioStore'
 import { Character } from '@/types'
-import { v4 as uuidv4 } from 'uuid'
+import { generateId } from '@/utils/generateId'
 
 const FOLLOWER_PRESETS = [
   { label: '1K+', value: 1000 },
@@ -30,7 +30,7 @@ export default function CreateCharacterScreen() {
   const handleCreate = () => {
     if (!name.trim() || !handle.trim()) return
     const character: Character = {
-      id: `custom_${uuidv4()}`,
+      id: `custom_${generateId()}`,
       name: name.trim(),
       handle: handle.replace('@', '').trim(),
       avatar: `https://i.pravatar.cc/150?u=${handle.trim()}`,
