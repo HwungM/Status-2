@@ -7,8 +7,8 @@ import { LocalWorldSessionService } from '@/services/worldSessionService'
 import { generateId } from '@/utils/generateId'
 import { Post, Notification, GameEvent } from '@/types'
 
-const NPC_POST_INTERVAL_MS = 25000  // 25 seconds
-const RANDOM_EVENT_INTERVAL_MS = 75000 // 75 seconds
+const NPC_POST_INTERVAL_MS = 40000  // 40 seconds
+const RANDOM_EVENT_INTERVAL_MS = 90000 // 90 seconds
 
 export function useGameLoop() {
   const { session, refreshSession } = useGameStore()
