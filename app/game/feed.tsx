@@ -151,59 +151,67 @@ export default function FeedScreen() {
 
   const handleSubmitResponse = async () => {
     if (!responseText.trim() || !activeEvent) return
+    const text = responseText.trim()
     setIsSubmitting(true)
     setEventModalVisible(false)
-    const prevFC = playerSlot?.gameState.followerCount ?? 0
-    const result = await handlePlayerAction(responseText.trim(), activeEvent.id)
-    if (result) {
-      showResultToast({
-        visible: true,
-        xpGained: result.xpGained,
-        followersGained: result.followersGained,
-        narrativeResult: result.narrativeResult,
-        statChanges: result.statChanges,
-      })
-      setPrevFollowerCount(prevFC)
-    }
     setResponseText('')
     setActiveEvent(null)
-    setTimeout(() => loadNextEvent(), 2000)
-    setIsSubmitting(false)
+    try {
+      const prevFC = playerSlot?.gameState.followerCount ?? 0
+      const result = await handlePlayerAction(text, activeEvent.id)
+      if (result) {
+        showResultToast({
+          visible: true,
+          xpGained: result.xpGained,
+          followersGained: result.followersGained,
+          narrativeResult: result.narrativeResult,
+          statChanges: result.statChanges,
+        })
+        setPrevFollowerCount(prevFC)
+      }
+      setTimeout(() => loadNextEvent(), 2000)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleSubmitPost = async () => {
     if (!postText.trim() || !session || !playerSlot || !playerChar) return
+    const text = postText.trim()
     setIsSubmitting(true)
     setPostComposerVisible(false)
-    const post: Post = {
-      id: generateId(),
-      sessionId: session.id,
-      authorCharacterId: playerChar.id,
-      authorUserId: playerSlot.userId,
-      content: postText.trim(),
-      likes: 0,
-      reposts: 0,
-      replies: [],
-      isPlayerPost: true,
-      resolvedEventId: null,
-      createdAt: Date.now(),
-    }
-    await LocalWorldSessionService.addPost(session.id, post)
-    const prevFC = playerSlot?.gameState.followerCount ?? 0
-    const result = await handlePlayerAction(`Posted: "${postText.trim()}"`)
-    if (result) {
-      showResultToast({
-        visible: true,
-        xpGained: result.xpGained,
-        followersGained: result.followersGained,
-        narrativeResult: result.narrativeResult,
-        statChanges: result.statChanges,
-      })
-      setPrevFollowerCount(prevFC)
-    }
     setPostText('')
-    await refreshSession()
-    setIsSubmitting(false)
+    try {
+      const post: Post = {
+        id: generateId(),
+        sessionId: session.id,
+        authorCharacterId: playerChar.id,
+        authorUserId: playerSlot.userId,
+        content: text,
+        likes: 0,
+        reposts: 0,
+        replies: [],
+        isPlayerPost: true,
+        resolvedEventId: null,
+        createdAt: Date.now(),
+      }
+      await LocalWorldSessionService.addPost(session.id, post)
+      const prevFC = playerSlot?.gameState.followerCount ?? 0
+      const result = await handlePlayerAction(`Posted: "${text}"`)
+      if (result) {
+        showResultToast({
+          visible: true,
+          xpGained: result.xpGained,
+          followersGained: result.followersGained,
+          narrativeResult: result.narrativeResult,
+          statChanges: result.statChanges,
+        })
+        setPrevFollowerCount(prevFC)
+      }
+      await refreshSession()
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleSubmitActivity = async () => {
