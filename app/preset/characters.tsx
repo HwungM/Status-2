@@ -20,7 +20,7 @@ export default function CharactersScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Select up to 8 characters</Text>
+        <Text style={styles.title}>Select up to 20 characters</Text>
         <View style={{ width: 40 }} />
       </View>
 

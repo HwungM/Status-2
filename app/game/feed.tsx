@@ -56,20 +56,17 @@ function getEventEmoji(title: string): string {
 export default function FeedScreen() {
   const { session, resultToast, showResultToast, hideResultToast, refreshSession } = useGameStore()
   const { viralMoment } = useUIStore()
-  const { isGenerating, generateNewEvent, handlePlayerAction, loadInitialFeed, doActivity, advanceDay } = useAI()
+  const { isGenerating, generateNewEvent, handlePlayerAction, loadInitialFeed, doActivity } = useAI()
   useGameLoop()
 
   const [activeEvent, setActiveEvent] = useState<GameEvent | null>(null)
   const [eventModalVisible, setEventModalVisible] = useState(false)
   const [postComposerVisible, setPostComposerVisible] = useState(false)
   const [activityModalVisible, setActivityModalVisible] = useState(false)
-  const [dayModalVisible, setDayModalVisible] = useState(false)
-  const [dayModalData, setDayModalData] = useState<{ daySummary: string; day: number } | null>(null)
   const [fabExpanded, setFabExpanded] = useState(false)
   const [postText, setPostText] = useState('')
   const [responseText, setResponseText] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isAdvancingDay, setIsAdvancingDay] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [prevFollowerCount, setPrevFollowerCount] = useState<number | null>(null)
   const [replyModalPost, setReplyModalPost] = useState<Post | null>(null)
@@ -232,22 +229,6 @@ export default function FeedScreen() {
     setIsSubmitting(false)
   }
 
-  const handleEndDay = async () => {
-    if (isAdvancingDay) return
-    setIsAdvancingDay(true)
-    setFabExpanded(false)
-    const result = await advanceDay()
-    if (result && session) {
-      setDayModalData({ daySummary: result.daySummary, day: session.worldState.dayNumber + 1 })
-      setDayModalVisible(true)
-      if (result.hasEvent) {
-        const pending = session.sharedEvents.find(e => !e.resolvedByUserId)
-        if (pending) setActiveEvent(pending)
-      }
-    }
-    setIsAdvancingDay(false)
-  }
-
   const handleScandalAction = async (text: string) => {
     const prevFC = playerSlot?.gameState.followerCount ?? 0
     const result = await handlePlayerAction(text)
@@ -297,16 +278,6 @@ export default function FeedScreen() {
         </TouchableOpacity>
 
         <View style={styles.headerRight}>
-          <TouchableOpacity
-            style={[styles.endDayBtn, isAdvancingDay && styles.endDayBtnDisabled]}
-            onPress={handleEndDay}
-            disabled={isAdvancingDay}
-          >
-            {isAdvancingDay
-              ? <ActivityIndicator size="small" color="#fff" />
-              : <Text style={styles.endDayText}>🌙 End Day</Text>
-            }
-          </TouchableOpacity>
           <TouchableOpacity onPress={() => router.replace('/')}>
             <Text style={styles.headerIcon}>✕</Text>
           </TouchableOpacity>
@@ -566,29 +537,6 @@ export default function FeedScreen() {
               />
             </ScrollView>
           )}
-        </View>
-      </Modal>
-
-      {/* Day Transition Modal */}
-      <Modal visible={dayModalVisible} animationType="fade" transparent>
-        <View style={styles.dayOverlay}>
-          <View style={styles.dayCard}>
-            <Text style={styles.dayCardEmoji}>🌅</Text>
-            <Text style={styles.dayCardTitle}>Day {dayModalData?.day}</Text>
-            <View style={styles.dayCardDivider} />
-            <Text style={styles.dayCardSummary}>{dayModalData?.daySummary}</Text>
-            <TouchableOpacity
-              style={styles.dayCardButton}
-              onPress={() => {
-                setDayModalVisible(false)
-                const pending = session?.sharedEvents.find(e => !e.resolvedByUserId)
-                if (pending) { setActiveEvent(pending) }
-                else { loadNextEvent() }
-              }}
-            >
-              <Text style={styles.dayCardButtonText}>Start the Day →</Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </Modal>
 

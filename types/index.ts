@@ -231,7 +231,7 @@ export interface SideQuest {
 export interface Notification {
   id: string
   sessionId: string
-  type: 'reply' | 'reaction' | 'follower_milestone' | 'activity_accepted' | 'scandal' | 'player_joined'
+  type: 'reply' | 'reaction' | 'follower_milestone' | 'activity_accepted' | 'scandal' | 'player_joined' | 'event'
   sourceCharacterId: string
   title: string
   preview: string

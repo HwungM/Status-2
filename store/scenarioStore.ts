@@ -53,7 +53,7 @@ export const useScenarioStore = create<ScenarioStore>((set, get) => ({
     const exists = selectedCharacters.find(c => c.id === character.id)
     if (exists) {
       set({ selectedCharacters: selectedCharacters.filter(c => c.id !== character.id) })
-    } else if (selectedCharacters.length < 8) {
+    } else if (selectedCharacters.length < 20) {
       set({ selectedCharacters: [...selectedCharacters, character] })
     }
   },

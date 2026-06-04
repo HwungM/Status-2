@@ -594,10 +594,24 @@ export async function generateNPCAutonomousPost(
 ): Promise<{ characterId: string; content: string; likes: number; reposts: number; mentionsPlayer: boolean }[]> {
   const system = buildMasterSystemPrompt(worldState, storyArc, playerState, playerCharacter, allCharacters, recentFeed)
 
+  const npcIds = allCharacters.filter(c => c.id !== playerCharacter.id).map(c => `id="${c.id}" @${c.handle}`).join(', ')
+
   const prompt = `Generate 1-2 organic NPC social media posts that happen without the player's involvement.
 
-NPCs should interact with each other, have their own drama, post about their lives. Only occasionally mention the player.
-Match each character's voice exactly. Write like real social media — short, punchy, platform-native.
+CRITICAL — 60% of posts should involve NPC-to-NPC interaction (not about the player). Use these interaction types:
+- Two NPCs arguing in replies: one NPC starts a post, another NPC quote-tweets or fires back directly (use @handle in content)
+- An NPC vague-posting that's obviously aimed at another NPC (e.g., "some people really need to learn loyalty 🙄")
+- An NPC directly calling out another NPC by name or handle
+- Two NPCs hyping each other, forming a public alliance, or declaring a collab
+- An NPC publicly distancing from or subtweeting another NPC they used to be close with
+
+The remaining 40% can be standalone posts about the NPC's own life, opinions, or world events.
+
+Only RARELY mention the player — they're not the center of every post.
+
+Match each character's voice exactly. Write like real social media — lowercase, short, punchy, platform-native. Make it feel like you opened Twitter right now.
+
+Available NPCs: ${npcIds}
 
 Respond in JSON:
 {
@@ -639,4 +653,92 @@ Each quest should be specific to this world and feel achievable through social m
 
   const parsed = JSON.parse(raw)
   return parsed.quests || []
+}
+
+export type RandomWorldEventType =
+  | 'stranger_callout'
+  | 'viral_screenshot'
+  | 'brand_dm'
+  | 'npc_drama_involving_player'
+  | 'rumor'
+  | 'unexpected_follow'
+  | 'npc_beef'
+
+export interface RandomWorldEvent {
+  type: RandomWorldEventType
+  title: string
+  description: string
+  npcPost?: { characterId: string; content: string; likes: number; reposts: number }
+  xpMin: number
+  xpMax: number
+  suggestions: string[]
+}
+
+export async function generateRandomWorldEvent(
+  worldState: WorldState,
+  storyArc: StoryArc,
+  playerState: PlayerGameState,
+  playerCharacter: Character,
+  allCharacters: Character[],
+): Promise<RandomWorldEvent | null> {
+  // 40% chance of firing — not every tick produces an event
+  if (Math.random() < 0.4) return null
+
+  const system = buildMasterSystemPrompt(worldState, storyArc, playerState, playerCharacter, allCharacters, [])
+  const npcList = allCharacters.filter(c => c.id !== playerCharacter.id)
+    .map(c => `id="${c.id}" @${c.handle} (${c.name})`)
+    .join(', ')
+
+  const eventTypes = [
+    'stranger_callout — someone with no prior relationship calls you out or quotes you',
+    'viral_screenshot — an old post/moment of yours gets screenshotted and recirculates (good or bad)',
+    'brand_dm — a brand or external account reaches out with an offer or accusation',
+    'npc_drama_involving_player — two NPCs are beefing and both tagged you for your take',
+    'rumor — a rumor about you starts spreading that you didn\'t create',
+    'unexpected_follow — a huge or surprising account suddenly follows or unfollows you',
+    'npc_beef — two NPCs start publicly beefing (player can choose sides or stay out)',
+  ]
+
+  const prompt = `Something unexpected just happened in the world — pick ONE event type and generate it. This fires randomly between player actions — it should feel like the world has a life of its own.
+
+Event types:
+${eventTypes.join('\n')}
+
+Available NPCs: ${npcList}
+World: ${worldState.worldSetting} (${worldState.fandom || 'original'})
+Current tension: ${storyArc.currentTension}/100
+
+Rules:
+- Pick whichever event type feels most interesting right now given the tension and world state
+- Make it specific to this world/fandom — reference real lore, places, characters
+- It should give the player something to react to (suggestions for how to respond)
+- Mix of positive and negative events — not everything is bad, not everything is good
+- npcPost is optional — only include if an NPC would actually post about this event
+
+Respond in JSON:
+{
+  "type": "one_of_the_types_above",
+  "title": "short punchy title (under 8 words)",
+  "description": "2-3 sentences describing exactly what happened, who's involved, why it matters to the player",
+  "npcPost": { "characterId": "exact_id_or_omit_field", "content": "what they posted", "likes": 4200, "reposts": 180 },
+  "xpMin": 20,
+  "xpMax": 60,
+  "suggestions": ["option 1 response", "option 2 response", "option 3 response"]
+}`
+
+  try {
+    const raw = await callOpenAI([
+      { role: 'system', content: system },
+      { role: 'user', content: prompt },
+    ])
+    const parsed = JSON.parse(raw)
+    if (!parsed.type || !parsed.title || !parsed.description) return null
+    // Remove npcPost if characterId is missing or invalid
+    if (parsed.npcPost && !allCharacters.find(c => c.id === parsed.npcPost?.characterId)) {
+      delete parsed.npcPost
+    }
+    return parsed as RandomWorldEvent
+  } catch {
+    return null
+  }
 }

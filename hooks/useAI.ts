@@ -174,6 +174,14 @@ export function useAI() {
       // Legend progress check (after refreshSession so we have latest state)
       await checkAndUpdateLegendProgress(session.id, ctx.playerSlot.userId)
 
+      // Auto-advance day every 5 actions (fire and forget)
+      if (totalActions % 5 === 0) {
+        const freshSession2 = await LocalWorldSessionService.getSession(session.id)
+        const nextDay = (freshSession2?.worldState.dayNumber ?? ctx.worldState.dayNumber) + 1
+        showToast(`🌙 Day ${nextDay} begins...`, 'info')
+        advanceDay().catch(() => {})
+      }
+
       return result
     } catch (e: any) {
       showToast(e.message, 'error')
@@ -422,6 +430,15 @@ export function useAI() {
       })
 
       await refreshSession()
+
+      // Auto-advance day every 5 actions (fire and forget)
+      if (totalActions % 5 === 0) {
+        const freshSession2 = await LocalWorldSessionService.getSession(session.id)
+        const nextDay = (freshSession2?.worldState.dayNumber ?? ctx.worldState.dayNumber) + 1
+        showToast(`🌙 Day ${nextDay} begins...`, 'info')
+        advanceDay().catch(() => {})
+      }
+
       return result
     } catch (e: any) {
       showToast(e.message, 'error')
